@@ -7,6 +7,7 @@ import { comparePassword } from '@/lib/server/password';
 import { prisma } from '@/lib/server/prisma';
 import { errorResponse, profileRateLimited } from '@/lib/server/route-utils';
 import { safeUser, SESSION_ERROR } from '@/lib/server/http';
+import { sendVerificationEmail } from '@/lib/email/verificationService';
 
 export const runtime = 'nodejs';
 const emailSchema = z.string().trim().toLowerCase().email().max(254);
@@ -24,7 +25,8 @@ export async function PATCH(request: NextRequest) {
     if (!parsed.success) return errorResponse(parsed.error);
     try {
       const updated = await prisma.user.update({ where: { id: user.id }, data: { email: parsed.data, emailChangedAt: new Date(), emailVerified: false } });
-      // VerificationToken modeli mevcut; e-posta gönderim sağlayıcısı eklenince yeni token burada tetiklenmelidir.
+      // Yeni adres doğrulanana kadar hesap emailVerified=false kalır; gönderim hatası profil güncellemesini geri almaz.
+      try { await sendVerificationEmail(updated.id, updated.email); } catch (emailError) { console.error('Doğrulama emaili gönderilemedi', emailError); }
       return NextResponse.json({ user: safeUser(updated) });
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError && error.code === 'P2002') return NextResponse.json({ error: 'bu e-posta adresi alınmış' }, { status: 409 });

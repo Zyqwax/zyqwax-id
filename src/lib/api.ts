@@ -3,11 +3,13 @@ import type { ApiErrorShape, AuthResponse, SafeUser } from './types';
 
 export class ApiError extends Error {
   status: number;
+  nextAllowedAt?: string;
 
-  constructor(message: string, status: number) {
+  constructor(message: string, status: number, nextAllowedAt?: string) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
+    this.nextAllowedAt = nextAllowedAt;
   }
 }
 
@@ -92,7 +94,10 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
     if (nextToken) return request<T>(path, { ...options, retry: false });
     throw new ApiError('Oturumunuz sona erdi. Yeniden giriş yapın.', 401);
   }
-  if (!response.ok) throw new ApiError(errorMessage(body as ApiErrorShape, response.status), response.status);
+  if (!response.ok) {
+    const nextAllowedAt = typeof (body as { nextAllowedAt?: unknown }).nextAllowedAt === 'string' ? (body as { nextAllowedAt: string }).nextAllowedAt : undefined;
+    throw new ApiError(errorMessage(body as ApiErrorShape, response.status), response.status, nextAllowedAt);
+  }
   return body as T;
 }
 
@@ -108,8 +113,63 @@ export function register(email: string, username: string, password: string): Pro
   });
 }
 
+// Parola sıfırlama emaili isteğini başlatır.
+export function forgotPassword(email: string): Promise<{ message: string }> { return request('/api/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }), skipRefresh: true }); }
+
+// Verilen token ile yeni parola belirler.
+export function resetPassword(token: string, newPassword: string): Promise<{ message: string }> { return request('/api/auth/reset-password', { method: 'POST', body: JSON.stringify({ token, newPassword }), skipRefresh: true }); }
+
+// Giriş yapmış kullanıcının doğrulama emailini yeniden ister.
+export function resendVerification(): Promise<{ message: string }> { return request('/api/auth/resend-verification', { method: 'POST' }); }
+
+// Email doğrulama token'ını backend'e gönderir.
+export function verifyEmail(token: string): Promise<{ message: string }> { return request(`/api/auth/verify-email?token=${encodeURIComponent(token)}`, { skipRefresh: true }); }
+
 export function fetchMe(): Promise<{ user: SafeUser }> {
   return request<{ user: SafeUser }>('/api/auth/me');
+}
+
+export type FriendListItem = { id: string; username?: string; name: string | null; avatarUrl?: string | null };
+export type FriendRequestItem = { id: string; status: string; createdAt: string; user: FriendListItem };
+
+export function updateProfileField(path: string, body: Record<string, string>): Promise<{ user: SafeUser }> {
+  return request<{ user: SafeUser }>(path, { method: 'PATCH', body: JSON.stringify(body) });
+}
+
+export function fetchFriends(): Promise<{ friends: FriendListItem[] }> {
+  return request<{ friends: FriendListItem[] }>('/api/friends');
+}
+
+export function fetchFriendRequests(type: 'sent' | 'received'): Promise<{ requests: FriendRequestItem[] }> {
+  return request<{ requests: FriendRequestItem[] }>(`/api/friends/requests?type=${type}`);
+}
+
+export function sendFriendRequest(receiverUsername: string): Promise<unknown> {
+  return request('/api/friends/requests', { method: 'POST', body: JSON.stringify({ receiverUsername }) });
+}
+
+export function respondToFriendRequest(id: string, action: 'accept' | 'decline'): Promise<unknown> {
+  return request(`/api/friends/requests/${id}/${action}`, { method: 'POST' });
+}
+
+export function cancelFriendRequest(id: string): Promise<unknown> {
+  return request(`/api/friends/requests/${id}`, { method: 'DELETE' });
+}
+
+export function removeFriend(friendId: string): Promise<unknown> {
+  return request(`/api/friends/${friendId}`, { method: 'DELETE' });
+}
+
+export function fetchBlocked(): Promise<{ blocked: Array<{ id: string; createdAt: string; user: FriendListItem }> }> {
+  return request('/api/friends/blocked');
+}
+
+export function unblockUser(userId: string): Promise<unknown> {
+  return request(`/api/friends/block/${userId}`, { method: 'DELETE' });
+}
+
+export function fetchReceivedRequestCount(): Promise<number> {
+  return fetchFriendRequests('received').then(({ requests }) => requests.length);
 }
 
 export function logout(): Promise<{ message: string }> {

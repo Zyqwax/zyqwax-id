@@ -82,6 +82,7 @@ export function AuthForm({ mode }: AuthFormProps) {
     <label>Şifre <input name="password" type="password" value={password} onChange={(e) => { setPassword(e.target.value); setFieldErrors((current) => ({ ...current, password: '' })); }} autoComplete={isRegister ? 'new-password' : 'current-password'} minLength={8} required placeholder="En az 8 karakter" aria-invalid={Boolean(fieldErrors.password)} />{fieldErrors.password && <span className="form-error" role="alert">{fieldErrors.password}</span>}</label>
     {error && <p className="form-error" role="alert">{error}</p>}
     <button className="button button-primary button-wide" type="submit" disabled={pending}>{pending ? 'Bekleyin…' : isRegister ? 'Hesap oluştur' : 'Giriş yap'}</button>
+    {!isRegister && <p className="form-switch"><Link href="/forgot-password">Şifremi unuttum</Link></p>}
     <p className="form-switch">{isRegister ? 'Zaten hesabın var mı?' : 'İlk kez mi buradasın?'}{' '}<Link href={isRegister ? '/login' : '/register'}>{isRegister ? 'Giriş yap' : 'Kayıt ol'}</Link></p>
   </form>;
 }
