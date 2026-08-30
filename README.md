@@ -55,7 +55,6 @@ Vercel Environment Variables içine server-only olarak şunları ekleyin:
 DATABASE_URL=<pooled production PostgreSQL connection>
 JWT_ACCESS_SECRET=<random secret, minimum 32 characters>
 JWT_REFRESH_SECRET=<different random secret, minimum 32 characters>
-NODE_ENV=production
 OAUTH_LOGIN_URL=https://<your-domain>/login
 ```
 
