@@ -25,7 +25,13 @@ export function PublicRoute({ children }: Readonly<{ children: React.ReactNode }
 
   useEffect(() => {
     if (status === 'authenticated') {
-      router.replace(safeRedirect(searchParams.get('redirect') ?? searchParams.get('next')));
+      const redirect = searchParams.get('redirect');
+      if (redirect) {
+        // OAuth Route Handler'ına router yerine tam sayfa navigasyon yapılır.
+        window.location.href = safeRedirect(redirect);
+      } else {
+        router.replace(safeRedirect(searchParams.get('next')));
+      }
     }
   }, [router, searchParams, status]);
 

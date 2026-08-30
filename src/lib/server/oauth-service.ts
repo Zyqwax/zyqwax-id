@@ -3,7 +3,7 @@ import { prisma } from './prisma';
 import { comparePassword } from './password';
 import { createCodeChallenge, generateAuthorizationCode, hashAuthorizationCode, safeCompare } from './oauth-code';
 import { generateAccessToken, generateRefreshToken, hashRefreshToken } from './jwt';
-import { getUserFromAccessToken, ServiceError } from './auth-service';
+import { getAuthenticatedUserFromRequest, ServiceError } from './auth-service';
 import { OAUTH_ERROR } from './http';
 import { normalizeScope } from './validation';
 import { getServerEnv } from './env';
@@ -19,7 +19,8 @@ export async function authorizeUser(request: NextRequest, query: AuthorizeInput)
   if (!scope) throw new ServiceError(400, 'desteklenmeyen scope');
 
   let user;
-  try { user = await getUserFromAccessToken(request.headers.get('authorization')); }
+  // Önce bearer header, yoksa root kapsamlı refresh cookie ile kullanıcı bulunur.
+  try { user = await getAuthenticatedUserFromRequest(request); }
   catch (error) {
     if (!(error instanceof ServiceError) || error.status !== 401) throw error;
     const loginUrl = new URL(getServerEnv().OAUTH_LOGIN_URL ?? '/login', request.url);
@@ -55,7 +56,7 @@ export async function exchangeAuthorizationCode(body: TokenInput) {
 }
 
 export async function getUserInfo(request: NextRequest) {
-  const user = await getUserFromAccessToken(request.headers.get('authorization'));
+  const user = await getAuthenticatedUserFromRequest(request);
   const requestedScope = typeof request.nextUrl.searchParams.get('scope') === 'string' ? normalizeScope(request.nextUrl.searchParams.get('scope') || '') : 'profile email';
   if (!requestedScope) throw new ServiceError(400, 'desteklenmeyen scope');
   const scopes = new Set(requestedScope.split(' '));

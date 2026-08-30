@@ -76,3 +76,21 @@ export async function getUserFromAccessToken(header: string | null) {
     return user;
   } catch { throw new ServiceError(401, SESSION_ERROR); }
 }
+
+// Tarayıcı yönlendirmelerinde header gelmediği için geçerli refresh cookie'si de kimlik kanıtıdır.
+export async function getUserFromRefreshToken(rawToken: string | undefined) {
+  if (!rawToken) throw new ServiceError(401, SESSION_ERROR);
+  const current = await prisma.refreshToken.findFirst({
+    where: { tokenHash: hashRefreshToken(rawToken), revoked: false, expiresAt: { gt: new Date() } },
+    include: { user: true },
+  });
+  if (!current || !current.user.isActive) throw new ServiceError(401, SESSION_ERROR);
+  return current.user;
+}
+
+// Normal bearer auth'ı korur; header yoksa route'lara ortak cookie doğrulaması uygular.
+export async function getAuthenticatedUserFromRequest(request: import('next/server').NextRequest) {
+  const authorization = request.headers.get('authorization');
+  if (authorization) return getUserFromAccessToken(authorization);
+  return getUserFromRefreshToken(request.cookies.get('refreshToken')?.value);
+}

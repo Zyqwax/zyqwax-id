@@ -45,8 +45,13 @@ export function AuthForm({ mode }: AuthFormProps) {
     try {
       if (isRegister) await register(email.trim(), password, name.trim() || undefined);
       else await login(email.trim(), password);
-      const returnTo = searchParams.get('redirect') ?? searchParams.get('next');
-      router.replace(safeRedirect(returnTo));
+      const redirect = searchParams.get('redirect');
+      if (redirect) {
+        // OAuth bir Route Handler olduğu için _rsc eklenmemesi adına tam sayfa açılır.
+        window.location.href = safeRedirect(redirect);
+      } else {
+        router.replace(safeRedirect(searchParams.get('next')));
+      }
     } catch (cause) {
       setError(cause instanceof ApiError ? cause.message : 'İşlem tamamlanamadı. Tekrar deneyin.');
     } finally { setPending(false); }
