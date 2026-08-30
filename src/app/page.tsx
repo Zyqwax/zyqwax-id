@@ -1,8 +1,9 @@
 import Link from "next/link";
+import { PublicRoute } from "@/components/public-route";
 
 export default function Home() {
   return (
-    <main className="landing page-shell">
+    <PublicRoute><main className="landing page-shell">
       <div className="landing-mark">
         <span aria-hidden="true">✦</span> ZYQWAX ID
       </div>
@@ -41,6 +42,6 @@ export default function Home() {
         <span>Kimlik katmanı / 01</span>
         <span>Güvenli oturum</span>
       </footer>
-    </main>
+    </main></PublicRoute>
   );
 }
