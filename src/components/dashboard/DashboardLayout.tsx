@@ -1,6 +1,9 @@
+import { SidebarProvider } from './SidebarContext';
 import { Sidebar } from './Sidebar';
+import { DashboardHeader } from './DashboardHeader';
+import { SidebarBackdrop } from './SidebarBackdrop';
 
-// Tüm dashboard sayfalarını ortak sidebar ve içerik yüzeyiyle sarar.
+// Tüm korumalı sayfaları referans admin shell'i içinde ortaklaştırır.
 export function DashboardLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <div className="dashboard-shell min-h-screen overflow-x-hidden bg-bg-canvas p-0 md:p-4"><div className="mx-auto flex min-h-[calc(100vh-2rem)] max-w-[1440px] overflow-hidden rounded-[14px] border border-border-default bg-bg-surface"><Sidebar /><main className="min-w-0 flex-1 overflow-x-hidden">{children}</main></div></div>;
+  return <SidebarProvider><div className="dashboard-shell"><Sidebar /><SidebarBackdrop /><div className="dashboard-shell-main"><DashboardHeader /><main>{children}</main></div></div></SidebarProvider>;
 }

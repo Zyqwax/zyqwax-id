@@ -5,6 +5,7 @@ export type SafeUser = {
   username?: string;
   avatar?: string | null;
   avatarUrl?: string | null;
+  avatarPublicId?: string | null;
   emailVerified?: boolean;
   usernameChangedAt?: string | null;
   emailChangedAt?: string | null;
