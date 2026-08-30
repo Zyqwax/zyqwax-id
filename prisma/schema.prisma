@@ -1,0 +1,102 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Merkezi kimlik bilgilerini tutar; id, bağlı uygulamaların kendi veritabanlarında kullanacağı tek ortak UUID anahtardır.
+model User {
+  id                 String              @id @default(uuid())
+  email              String              @unique
+  passwordHash       String
+  name               String?
+  avatar             String?
+  emailVerified      Boolean             @default(false)
+  isActive           Boolean             @default(true)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  refreshTokens      RefreshToken[]
+  verificationTokens VerificationToken[]
+  loginHistories     LoginHistory[]
+  authorizationCodes AuthorizationCode[]
+}
+
+// SSO'ya bağlanan uygulama kayıtlarını ve gizli anahtar özetlerini tutar; id JWT aud claim'i için kullanılabilir.
+model App {
+  id                 String              @id @default(uuid())
+  clientId           String              @unique @default(uuid())
+  name               String
+  secretKeyHash      String
+  redirectUris       String[]
+  allowedOrigins     String[]
+  createdAt          DateTime            @default(now())
+  refreshTokens      RefreshToken[]
+  authorizationCodes AuthorizationCode[]
+}
+
+// Kullanıcı-uygulama oturumlarını temsil eder; düz token yerine yalnızca token özeti saklanır.
+model RefreshToken {
+  id        String   @id @default(uuid())
+  tokenHash String   @unique
+  userId    String
+  appId     String?
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Kullanıcı silinince oturum kayıtları anlamsız kalır; bu nedenle User ilişkisi Cascade'dir.
+  app       App?     @relation(fields: [appId], references: [id], onDelete: Cascade)
+  // App silinince yalnızca o uygulamaya ait oturumların da silinmesi güvenlidir.
+}
+
+// E-posta doğrulama ve parola sıfırlama işlemleri için süreli, tek kullanımlık token özetlerini tutar.
+model VerificationToken {
+  id        String                @id @default(uuid())
+  tokenHash String                @unique
+  userId    String
+  type      VerificationTokenType
+  expiresAt DateTime
+  createdAt DateTime              @default(now())
+  user      User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Kullanıcı silinince doğrulama/parola sıfırlama tokenlarının da geçersiz olması için Cascade kullanılır.
+}
+
+enum VerificationTokenType {
+  EMAIL_VERIFY
+  PASSWORD_RESET
+}
+
+// Başarılı ve başarısız giriş denemelerini denetim amacıyla saklar.
+model LoginHistory {
+  id        String   @id @default(uuid())
+  userId    String
+  ipAddress String
+  userAgent String
+  success   Boolean
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// Kısa ömürlü OAuth authorization code özetlerini ve PKCE bağlamını tutar.
+model AuthorizationCode {
+  id                  String   @id @default(uuid())
+  codeHash            String   @unique
+  userId              String
+  appId               String
+  redirectUri         String
+  scope               String?  @default("profile email")
+  codeChallenge       String
+  codeChallengeMethod String   @default("S256")
+  expiresAt           DateTime
+  used                Boolean  @default(false)
+  createdAt           DateTime @default(now())
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  app                 App      @relation(fields: [appId], references: [id], onDelete: Cascade)
+
+  @@index([appId, used, expiresAt])
+}

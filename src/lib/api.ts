@@ -1,5 +1,4 @@
 import { clearSession, getAccessToken, setAccessToken } from './auth-store';
-import { requireApiUrl } from './env';
 import type { ApiErrorShape, AuthResponse, SafeUser } from './types';
 
 export class ApiError extends Error {
@@ -36,7 +35,7 @@ async function refreshAccessToken(): Promise<string | null> {
   if (refreshPromise) return refreshPromise;
   refreshPromise = (async () => {
     try {
-      const response = await fetch(`${requireApiUrl()}/auth/refresh`, {
+      const response = await fetch('/api/auth/refresh', {
         method: 'POST',
         credentials: 'include',
         cache: 'no-store',
@@ -73,7 +72,7 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
 
   let response: Response;
   try {
-    response = await fetch(`${requireApiUrl()}${path}`, {
+    response = await fetch(path, {
       ...init,
       headers,
       credentials: init.credentials ?? 'include',
@@ -88,7 +87,7 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
   }
 
   const body = await readResponseBody(response);
-  if (response.status === 401 && retry && !skipRefresh && path !== '/auth/refresh') {
+  if (response.status === 401 && retry && !skipRefresh && path !== '/api/auth/refresh') {
     const nextToken = await refreshAccessToken();
     if (nextToken) return request<T>(path, { ...options, retry: false });
     throw new ApiError('Oturumunuz sona erdi. Yeniden giriş yapın.', 401);
@@ -98,23 +97,23 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
 }
 
 export function login(email: string, password: string): Promise<AuthResponse> {
-  return request<AuthResponse>('/auth/login', {
+  return request<AuthResponse>('/api/auth/login', {
     method: 'POST', body: JSON.stringify({ email, password }), skipRefresh: true,
   });
 }
 
 export function register(email: string, password: string, name?: string): Promise<AuthResponse> {
-  return request<AuthResponse>('/auth/register', {
+  return request<AuthResponse>('/api/auth/register', {
     method: 'POST', body: JSON.stringify({ email, password, ...(name ? { name } : {}) }), skipRefresh: true,
   });
 }
 
 export function fetchMe(): Promise<{ user: SafeUser }> {
-  return request<{ user: SafeUser }>('/auth/me');
+  return request<{ user: SafeUser }>('/api/auth/me');
 }
 
 export function logout(): Promise<{ message: string }> {
-  return request<{ message: string }>('/auth/logout', { method: 'POST', skipRefresh: true });
+  return request<{ message: string }>('/api/auth/logout', { method: 'POST', skipRefresh: true });
 }
 
 export { refreshAccessToken };

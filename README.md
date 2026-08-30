@@ -1,10 +1,10 @@
-# Zyqwax ID frontend
+# Zyqwax ID — Next.js full-stack
 
-Next.js App Router ile Zyqwax ID backend API'sine bağlanan, access token'ı yalnızca bellekte tutan frontend.
+Zyqwax ID artık UI ve backend API route'larını aynı Next.js App Router uygulamasında barındırır. `backend/` klasörü silinmemiştir; mevcut Express uygulaması, Prisma kaynağı ve migration geçmişi geriye dönük uyumluluk/rollback için korunur. Vercel projesinin root'u `zyqwax-auth` olmalıdır.
 
-## Geliştirme
+## Geliştirme ve doğrulama
 
-Backend'i `http://localhost:3000`, frontend'i `http://localhost:3001` üzerinde çalıştırmak için:
+Yalnızca pnpm kullanılır:
 
 ```text
 Install: pnpm install
@@ -13,38 +13,70 @@ Production build: pnpm build
 Production start: pnpm start
 ```
 
-`NEXT_PUBLIC_API_URL` public bir API adresidir; secret değildir. `.env.local` yerel makinede tutulur ve git'e gönderilmez. `.env.example` yalnızca placeholder içerir. Client secret, JWT secret, database URL veya başka bir credential'ı `NEXT_PUBLIC_` değişkenine koymayın.
+Build önce `prisma generate`, sonra `next build` çalıştırır. Yerel API route'larını çalıştırmak için `.env.example` içindeki server-only değişkenleri `.env.local` içine gerçek yerel değerlerle doldurun. `.env.local` git'e gönderilmez.
 
-## Auth mimarisi
+## API route'ları
 
-- `AuthProvider`, access token'ı React state ve module memory store'da tutar. `localStorage`, `sessionStorage`, URL veya normal cookie kullanılmaz.
-- Uygulama açılışında tek bir shared bootstrap promise ile `/auth/refresh` çağrılır; başarılı refresh sonrası `/auth/me` ile güvenli kullanıcı profili yüklenir.
-- Refresh cookie'si backend'in HttpOnly `refreshToken` cookie'sidir. `/auth/register`, `/auth/login`, `/auth/refresh` ve `/auth/logout` çağrıları `credentials: 'include'` gönderir.
-- API wrapper bir 401 için tek bir retry yapar. Aynı anda gelen 401'ler tek bir in-flight refresh promise'ini paylaşır; refresh başarısızsa memory session temizlenir ve kullanıcı login'e yönlendirilir.
-- `/dashboard` client-side `ProtectedRoute` ile korunur. Backend cookie'si Render domain'inde, frontend Vercel domain'inde olduğu için middleware cookie'yi okuyamaz.
-- Backend'in generic `error` yanıtları kullanıcıya gösterilir; token, parola ve secret loglanmaz.
+Native Next route handler'lar şu endpoint'leri sağlar:
 
-## OAuth2 / PKCE değerlendirmesi
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `POST /api/auth/refresh`
+- `POST /api/auth/logout`
+- `GET /api/auth/me`
+- `GET /api/oauth/authorize`
+- `POST /api/oauth/token` (JSON veya form-urlencoded)
+- `GET /api/oauth/userinfo`
+- `GET /api/health`
 
-Backend `/oauth/authorize` endpoint'i Bearer access token ister. Normal bir `window.location` navigasyonu Authorization header taşımaz; ayrıca access token'ı query veya hash'e eklemek token sızıntısı olur. Bu nedenle bu frontend OAuth continuation'ı güvensiz bir bypass gibi uygulamaz ve OAuth client/callback akışını “tamamlandı” olarak sunmaz.
+İstemci API wrapper'ı artık external API URL kullanmaz; relative `/api` yollarını kullanır. Frontend ve API aynı origin olduğu için refresh cookie browser refresh sonrasında da gönderilir.
 
-Backend mevcut davranışında oturum yoksa authorize sorgusunu `OAUTH_LOGIN_URL` üzerindeki `/login?redirect=...` adresine taşır. Bu UI yalnızca aynı-origin, `/` ile başlayan ve `//` ile başlamayan `next` değerlerine yönlendirir; keyfi redirect kabul etmez. OAuth continuation için güvenli bir sonraki tasarım:
+## Auth güvenliği
 
-1. Ayrı bir OAuth client kaydı, exact registered redirect URI ve public client için PKCE üretimi.
-2. `code_verifier` ve `state` değerlerinin kısa ömürlü, tab/session akışına bağlı güvenli saklanması.
-3. Authorization header gerektiren authorize çağrısı için server-side BFF/route handler veya backend'in güvenli browser redirect akışını desteklemesi.
-4. Secret gerektiren `/oauth/token` exchange işleminin browser bundle'ına girmeden server-side yapılması.
+- Access token yalnızca React/module memory'de tutulur; localStorage, sessionStorage, URL veya normal cookie kullanılmaz.
+- Refresh token yalnızca `HttpOnly` cookie'dedir. Native API cookie'si production'da `Secure`, `SameSite=Lax` ve `/api/auth` path'i ile yazılır.
+- `/auth/refresh` rotation işlemi Prisma transaction içindedir.
+- Client 401 sonrası tek bir shared refresh promise kullanır ve orijinal isteği yalnızca bir kez tekrarlar.
+- Parolalar bcrypt ile hash'lenir; veritabanında refresh token özeti tutulur.
+- Generic hata yanıtları credential içermez; route handler'lar secret/token loglamaz.
+- Tüm API route'ları Prisma/bcrypt/jsonwebtoken nedeniyle Node.js runtime olarak çalışır; Edge runtime kullanılmaz.
 
-Bu blocker çözülmeden access token'ı URL'ye koymayın, state/PKCE doğrulamasını kapatmayın ve demo bypass kullanmayın.
+## Prisma ve Vercel
 
-## Vercel + Render ayarları
-
-Vercel Project Settings → Environment Variables altında Preview ve Production için ayrı ayrı:
+`backend/prisma/schema.prisma` ve migration'ların deploy root'u için birebir kopyası `zyqwax-auth/prisma/` altında tutulur. İki schema'yı birlikte güncel tutun. Production migration'ı request handler içinde veya her build'de çalıştırmayın; kontrollü release adımı olarak şu komutla, production database'e karşı bir kez uygulayın:
 
 ```text
-NEXT_PUBLIC_API_URL=https://<zyqwax-id-backend>.onrender.com
+pnpm prisma migrate deploy --schema prisma/schema.prisma
 ```
 
-Gerçek Render URL'sini placeholder yerine girin. Bu değer değişince yeniden deploy gerekir. Backend Render ayarlarında `ALLOWED_ORIGINS` içine gerçek Vercel origin'ini (`https://...vercel.app`) ekleyin; gerekirse Preview domain'ini de ayrıca ekleyin. Backend CORS `credentials: true` kullandığı için wildcard `*` origin kullanmayın.
+Vercel Environment Variables içine server-only olarak şunları ekleyin:
 
-Render cold start/uyku sonrası ilk istek gecikebilir; ekranlarda loading state ve ağ timeout/error mesajı bulunur. Gerçek secret'ları frontend env'ine, `.env.example` dosyasına veya git'e yazmayın. Deploy ve GitHub push bu çalışma kapsamında yapılmadı.
+```text
+DATABASE_URL=<pooled production PostgreSQL connection>
+JWT_ACCESS_SECRET=<random secret, minimum 32 characters>
+JWT_REFRESH_SECRET=<different random secret, minimum 32 characters>
+NODE_ENV=production
+OAUTH_LOGIN_URL=https://<your-domain>/login
+```
+
+`DATABASE_URL` için Neon/Vercel Postgres gibi pooled bağlantı kullanın. JWT secret, database URL, OAuth client secret veya başka credential'ları `NEXT_PUBLIC_` ile başlayan değişkenlere koymayın.
+
+## Rate limit sınırı
+
+`src/lib/server/rate-limit.ts` şu anda sınırlı bir in-memory warm-instance adapter kullanır. Bu Vercel function instance'ları arasında paylaşılmaz ve yüksek riskli production trafiği için yeterli değildir. Production cutover'dan önce aynı arayüzü Upstash Redis/Vercel KV gibi dağıtık bir store ile değiştirmek gerekir.
+
+## OAuth2 / PKCE
+
+OAuth endpoint'leri authorization code + PKCE S256, exact registered redirect URI, kısa ömürlü tek kullanımlık code ve constant-time challenge karşılaştırmasını korur. Token endpoint client secret'ı server-side karşılaştırır.
+
+`/oauth/authorize` Bearer access token sözleşmesini korur. Access token'ı query/hash'e koyan bir browser bypass uygulanmamıştır. Native same-origin bir OAuth client akışı eklenecekse `state` ve `code_verifier` server-side, kısa ömürlü bir continuation/session ile bağlanmalı; client secret browser bundle'ına girmemelidir.
+
+## Vercel geçişi
+
+- Vercel project root: `zyqwax-auth`
+- Build command: `pnpm build`
+- Install command: `pnpm install`
+- Production domain'i `OAUTH_LOGIN_URL` içinde kullanın.
+- Prisma migration'ı deploy öncesi kontrollü release/database adımı olarak uygulayın.
+- `backend/` Express uygulaması bu migration sırasında silinmez; geçiş doğrulanana kadar rollback referansı olarak korunur.
+- Deploy, GitHub push veya Vercel panel değişikliği bu çalışma kapsamında yapılmadı.
