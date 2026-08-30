@@ -45,7 +45,8 @@ export function AuthForm({ mode }: AuthFormProps) {
     try {
       if (isRegister) await register(email.trim(), password, name.trim() || undefined);
       else await login(email.trim(), password);
-      router.replace(safeRedirect(searchParams.get('next')));
+      const returnTo = searchParams.get('redirect') ?? searchParams.get('next');
+      router.replace(safeRedirect(returnTo));
     } catch (cause) {
       setError(cause instanceof ApiError ? cause.message : 'İşlem tamamlanamadı. Tekrar deneyin.');
     } finally { setPending(false); }
