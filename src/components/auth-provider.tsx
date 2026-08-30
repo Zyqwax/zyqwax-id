@@ -37,7 +37,7 @@ export function AuthProvider({ children }: Readonly<{ children: React.ReactNode 
 
   const refreshSession = useCallback(async (): Promise<boolean> => {
     if (!bootstrapPromise) {
-      bootstrapPromise = (async () => {
+      const operation = (async () => {
         const token = await api.refreshAccessToken();
         if (!token) return false;
         try {
@@ -52,10 +52,12 @@ export function AuthProvider({ children }: Readonly<{ children: React.ReactNode 
         } catch {
           clearSession();
           return false;
-        } finally {
-          bootstrapPromise = null;
         }
       })();
+      bootstrapPromise = operation;
+      void operation.finally(() => {
+        if (bootstrapPromise === operation) bootstrapPromise = null;
+      });
     }
     const authenticated = await bootstrapPromise;
     if (mounted.current && !authenticated) setStatus('unauthenticated');
