@@ -10,8 +10,8 @@ export class ServiceError extends Error {
 }
 
 type RequestMeta = { ip: string; userAgent: string };
-type Credentials = { email: string; password: string };
-type Registration = Credentials & { name?: string };
+type Credentials = { identifier: string; password: string };
+type Registration = { email: string; username: string; password: string };
 
 async function saveRefreshToken(userId: string, rawToken: string, appId: string | null = null): Promise<void> {
   await prisma.refreshToken.create({ data: { tokenHash: hashRefreshToken(rawToken), userId, appId, expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) } });
@@ -23,7 +23,12 @@ async function recordLogin(userId: string, meta: RequestMeta, success: boolean):
 
 export async function registerUser(body: Registration): Promise<{ user: ReturnType<typeof safeUser>; accessToken: string; refreshToken: string }> {
   try {
-    const user = await prisma.user.create({ data: { email: normalizeEmail(body.email), passwordHash: await hashPassword(body.password), name: body.name || null } });
+    const email = normalizeEmail(body.email);
+    const existingEmail = await prisma.user.findUnique({ where: { email }, select: { id: true } });
+    if (existingEmail) throw new ServiceError(409, 'bu e-posta adresi zaten kayıtlı');
+    const existingUsername = await prisma.user.findUnique({ where: { username: body.username }, select: { id: true } });
+    if (existingUsername) throw new ServiceError(409, 'bu kullanıcı adı alınmış');
+    const user = await prisma.user.create({ data: { email, username: body.username, passwordHash: await hashPassword(body.password) } });
     const accessToken = generateAccessToken(user.id);
     const refreshToken = generateRefreshToken(user.id);
     await saveRefreshToken(user.id, refreshToken);
@@ -35,7 +40,9 @@ export async function registerUser(body: Registration): Promise<{ user: ReturnTy
 }
 
 export async function loginUser(body: Credentials, meta: RequestMeta): Promise<{ user: ReturnType<typeof safeUser>; accessToken: string; refreshToken: string }> {
-  const user = await prisma.user.findUnique({ where: { email: normalizeEmail(body.email) } });
+  // Tek bir alanla hem e-posta hem username üzerinden kullanıcı bulunur.
+  const identifier = body.identifier.trim().toLowerCase();
+  const user = await prisma.user.findFirst({ where: { OR: [{ email: normalizeEmail(identifier) }, { username: identifier }] } });
   const valid = user ? await comparePassword(body.password, user.passwordHash) : false;
   if (!user || !valid || !user.isActive) {
     if (user) await recordLogin(user.id, meta, false);

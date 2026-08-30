@@ -96,15 +96,15 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
   return body as T;
 }
 
-export function login(email: string, password: string): Promise<AuthResponse> {
+export function login(identifier: string, password: string): Promise<AuthResponse> {
   return request<AuthResponse>('/api/auth/login', {
-    method: 'POST', body: JSON.stringify({ email, password }), skipRefresh: true,
+    method: 'POST', body: JSON.stringify({ identifier, password }), skipRefresh: true,
   });
 }
 
-export function register(email: string, password: string, name?: string): Promise<AuthResponse> {
+export function register(email: string, username: string, password: string): Promise<AuthResponse> {
   return request<AuthResponse>('/api/auth/register', {
-    method: 'POST', body: JSON.stringify({ email, password, ...(name ? { name } : {}) }), skipRefresh: true,
+    method: 'POST', body: JSON.stringify({ email, username, password }), skipRefresh: true,
   });
 }
 

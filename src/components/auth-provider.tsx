@@ -9,8 +9,8 @@ type AuthContextValue = {
   user: SafeUser | null;
   accessToken: string | null;
   status: 'loading' | 'authenticated' | 'unauthenticated';
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name?: string) => Promise<void>;
+  login: (identifier: string, password: string) => Promise<void>;
+  register: (email: string, username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshSession: () => Promise<boolean>;
 };
@@ -66,16 +66,16 @@ export function AuthProvider({ children }: Readonly<{ children: React.ReactNode 
 
   useEffect(() => { void refreshSession(); }, [refreshSession]);
 
-  const login = useCallback(async (email: string, password: string) => {
-    const result = await api.login(email, password);
+  const login = useCallback(async (identifier: string, password: string) => {
+    const result = await api.login(identifier, password);
     setSession(result.accessToken, result.user);
     setAccessToken(result.accessToken);
     setUser(result.user);
     setStatus('authenticated');
   }, []);
 
-  const register = useCallback(async (email: string, password: string, name?: string) => {
-    const result = await api.register(email, password, name);
+  const register = useCallback(async (email: string, username: string, password: string) => {
+    const result = await api.register(email, username, password);
     setSession(result.accessToken, result.user);
     setAccessToken(result.accessToken);
     setUser(result.user);

@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "prisma generate --schema prisma/schema.prisma && next build",
     "start": "next start",
+    "db:migrate": "prisma migrate dev --schema prisma/schema.prisma",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test:auth": "node scripts/test-auth.mjs"

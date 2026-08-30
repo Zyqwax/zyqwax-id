@@ -9,12 +9,19 @@ datasource db {
 
 // Merkezi kimlik bilgilerini tutar; id, bağlı uygulamaların kendi veritabanlarında kullanacağı tek ortak UUID anahtardır.
 model User {
-  id                 String              @id @default(uuid())
-  email              String              @unique
-  passwordHash       String
-  name               String?
-  avatar             String?
-  emailVerified      Boolean             @default(false)
+  id                    String              @id @default(uuid())
+  email                 String              @unique
+  username              String              @unique
+  passwordHash          String
+  name                  String?
+  avatar                String?
+  avatarUrl             String?
+  usernameChangedAt     DateTime?
+  emailChangedAt        DateTime?
+  nameChangedAt         DateTime?
+  avatarChangeCount     Int                 @default(0)
+  avatarChangeWindowStart DateTime?
+  emailVerified         Boolean             @default(false)
   isActive           Boolean             @default(true)
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
@@ -22,6 +29,12 @@ model User {
   verificationTokens VerificationToken[]
   loginHistories     LoginHistory[]
   authorizationCodes AuthorizationCode[]
+  sentRequests       FriendRequest[]      @relation("SentRequests")
+  receivedRequests   FriendRequest[]      @relation("ReceivedRequests")
+  friendshipsAsA     Friendship[]         @relation("FriendshipsAsA")
+  friendshipsAsB     Friendship[]         @relation("FriendshipsAsB")
+  blocksSent         Block[]              @relation("BlocksSent")
+  blocksReceived     Block[]              @relation("BlocksReceived")
 }
 
 // SSO'ya bağlanan uygulama kayıtlarını ve gizli anahtar özetlerini tutar; id JWT aud claim'i için kullanılabilir.
@@ -99,4 +112,51 @@ model AuthorizationCode {
   app                 App      @relation(fields: [appId], references: [id], onDelete: Cascade)
 
   @@index([appId, used, expiresAt])
+}
+
+enum FriendRequestStatus {
+  PENDING
+  DECLINED
+  ACCEPTED   // kabul edilince Friendship oluşur, bu kayıt geçmiş amaçlı kalır
+}
+
+model FriendRequest {
+  id          String   @id @default(uuid())
+  senderId    String
+  receiverId  String
+  status      FriendRequestStatus @default(PENDING)
+  createdAt   DateTime @default(now())
+  respondedAt DateTime?
+
+  sender      User @relation("SentRequests", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver    User @relation("ReceivedRequests", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@unique([senderId, receiverId])   // aynı yöne tekrar istek atılamaz
+  @@index([receiverId, status])       // "bana gelen bekleyen istekler" sorgusu için
+}
+
+model Friendship {
+  id        String   @id @default(uuid())
+  userAId   String   // KURAL: her zaman userAId < userBId (uuid string karşılaştırması)
+  userBId   String
+  createdAt DateTime @default(now())
+
+  userA     User @relation("FriendshipsAsA", fields: [userAId], references: [id], onDelete: Cascade)
+  userB     User @relation("FriendshipsAsB", fields: [userBId], references: [id], onDelete: Cascade)
+
+  @@unique([userAId, userBId])
+  @@index([userBId])   // userA zaten unique index'in parçası, userB için ayrı index gerekir
+}
+
+model Block {
+  id        String   @id @default(uuid())
+  blockerId String
+  blockedId String
+  createdAt DateTime @default(now())
+
+  blocker   User @relation("BlocksSent", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked   User @relation("BlocksReceived", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@unique([blockerId, blockedId])
+  @@index([blockedId])
 }

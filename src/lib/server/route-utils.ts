@@ -19,3 +19,8 @@ export function errorResponse(error: unknown): NextResponse {
 export function rateLimited(retryAfter: number): NextResponse {
   return NextResponse.json({ error: 'çok fazla istek, lütfen daha sonra tekrar deneyin' }, { status: 429, headers: { 'Retry-After': String(retryAfter) } });
 }
+
+// Profil alanı cooldown hatalarında istemcinin yeniden deneyebileceği zamanı bildirir.
+export function profileRateLimited(nextAllowedAt?: Date): NextResponse {
+  return NextResponse.json({ error: 'bu alan için değişiklik limiti doldu', ...(nextAllowedAt ? { nextAllowedAt: nextAllowedAt.toISOString() } : {}) }, { status: 429 });
+}
