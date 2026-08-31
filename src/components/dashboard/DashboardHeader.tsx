@@ -1,13 +1,37 @@
-'use client';
+"use client";
 
-import { usePathname } from 'next/navigation';
-import { useAuth } from '@/components/auth-provider';
-import { useSidebar } from './SidebarContext';
+import { usePathname } from "next/navigation";
+import { useSidebar } from "./SidebarContext";
 
-const titles: Record<string, string> = { '/dashboard': 'Profil', '/dashboard/friends': 'Arkadaşlar', '/dashboard/requests': 'İstekler', '/dashboard/blocked': 'Engellenenler' };
+const titles: Record<string, string> = {
+  "/dashboard": "Profil",
+  "/dashboard/friends": "Arkadaşlar",
+  "/dashboard/requests": "İstekler",
+  "/dashboard/blocked": "Engellenenler",
+};
 
-// Referans admin arayüzündeki üst başlık, mobil menü ve kullanıcı özetini sunar.
 export function DashboardHeader() {
-  const pathname = usePathname(); const { setMobileOpen } = useSidebar(); const { user } = useAuth();
-  return <header className="dashboard-topbar"><button className="mobile-menu-button" type="button" aria-label="Menüyü aç" onClick={() => setMobileOpen(true)}><span /><span /><span /></button><div className="breadcrumb"><span>Dashboard</span><strong>/</strong><b>{titles[pathname] ?? 'Zyqwax ID'}</b></div><div className="topbar-user">{user?.avatarUrl ? <img src={user.avatarUrl} alt="" /> : <span>{(user?.name || user?.username || user?.email || 'Z').slice(0, 1).toUpperCase()}</span>}<div><strong>{user?.name || user?.username || 'Kullanıcı'}</strong><small>{user?.email}</small></div></div></header>;
+  const pathname = usePathname();
+  const { setMobileOpen } = useSidebar();
+  return (
+    <header className="flex h-20 items-center border-b border-zinc-800 px-5 sm:px-10">
+      <div className="flex items-center gap-4">
+        <button
+          className="grid gap-1.5 rounded-lg p-2 md:hidden"
+          type="button"
+          aria-label="Menüyü aç"
+          onClick={() => setMobileOpen(true)}
+        >
+          <span className="h-0.5 w-5 bg-zinc-400" />
+          <span className="h-0.5 w-5 bg-zinc-400" />
+          <span className="h-0.5 w-5 bg-zinc-400" />
+        </button>
+        <div className="flex items-center gap-3 text-sm text-zinc-500">
+          <span>Dashboard</span>
+          <strong className="font-normal text-zinc-700">/</strong>
+          <b className="font-medium text-zinc-200">{titles[pathname] ?? "Zyqwax ID"}</b>
+        </div>
+      </div>
+    </header>
+  );
 }

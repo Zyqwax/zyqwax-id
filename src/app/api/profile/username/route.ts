@@ -7,6 +7,7 @@ import { comparePassword } from '@/lib/server/password';
 import { prisma } from '@/lib/server/prisma';
 import { errorResponse, profileRateLimited } from '@/lib/server/route-utils';
 import { safeUser, SESSION_ERROR } from '@/lib/server/http';
+import { canBypassProfileLimits } from '@/lib/server/roles';
 
 export const runtime = 'nodejs';
 
@@ -17,8 +18,10 @@ export async function PATCH(request: NextRequest) {
     const body = await request.json();
     const currentPassword = typeof body?.currentPassword === 'string' ? body.currentPassword : '';
     if (!(await comparePassword(currentPassword, user.passwordHash))) throw new ServiceError(401, SESSION_ERROR);
-    const limit = canChangeField(user.usernameChangedAt, 7 * 24 * 60 * 60 * 1000);
-    if (!limit.allowed) return profileRateLimited(limit.nextAllowedAt);
+    if (!canBypassProfileLimits(user.role)) {
+      const limit = canChangeField(user.usernameChangedAt, 7 * 24 * 60 * 60 * 1000);
+      if (!limit.allowed) return profileRateLimited(limit.nextAllowedAt);
+    }
     const parsed = usernameSchema.safeParse(body?.username);
     if (!parsed.success) return errorResponse(parsed.error);
     try {

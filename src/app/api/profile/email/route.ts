@@ -8,6 +8,7 @@ import { prisma } from '@/lib/server/prisma';
 import { errorResponse, profileRateLimited } from '@/lib/server/route-utils';
 import { safeUser, SESSION_ERROR } from '@/lib/server/http';
 import { sendVerificationEmail } from '@/lib/email/verificationService';
+import { canBypassProfileLimits } from '@/lib/server/roles';
 
 export const runtime = 'nodejs';
 const emailSchema = z.string().trim().toLowerCase().email().max(254);
@@ -19,8 +20,10 @@ export async function PATCH(request: NextRequest) {
     const body = await request.json();
     const currentPassword = typeof body?.currentPassword === 'string' ? body.currentPassword : '';
     if (!(await comparePassword(currentPassword, user.passwordHash))) throw new ServiceError(401, SESSION_ERROR);
-    const limit = canChangeField(user.emailChangedAt, 7 * 24 * 60 * 60 * 1000);
-    if (!limit.allowed) return profileRateLimited(limit.nextAllowedAt);
+    if (!canBypassProfileLimits(user.role)) {
+      const limit = canChangeField(user.emailChangedAt, 7 * 24 * 60 * 60 * 1000);
+      if (!limit.allowed) return profileRateLimited(limit.nextAllowedAt);
+    }
     const parsed = emailSchema.safeParse(body?.email);
     if (!parsed.success) return errorResponse(parsed.error);
     try {

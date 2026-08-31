@@ -6,6 +6,7 @@ import { prisma } from '@/lib/server/prisma';
 import { badRequest, errorResponse, profileRateLimited } from '@/lib/server/route-utils';
 import { safeUser } from '@/lib/server/http';
 import { getCloudinary } from '@/lib/cloudinary';
+import { canBypassProfileLimits } from '@/lib/server/roles';
 
 export const runtime = 'nodejs';
 const avatarSchema = z.object({ avatarUrl: z.string().trim().url().max(2048), avatarPublicId: z.string().trim().min(1).max(255) });
@@ -15,7 +16,7 @@ export async function PATCH(request: NextRequest) {
   try {
     const user = await getAuthenticatedUserFromRequest(request);
     const limit = canChangeAvatar(user.avatarChangeCount, user.avatarChangeWindowStart);
-    if (!limit.allowed) {
+    if (!canBypassProfileLimits(user.role) && !limit.allowed) {
       const nextAllowedAt = user.avatarChangeWindowStart ? new Date(user.avatarChangeWindowStart.getTime() + 24 * 60 * 60 * 1000) : undefined;
       return profileRateLimited(nextAllowedAt);
     }
@@ -27,7 +28,7 @@ export async function PATCH(request: NextRequest) {
       data: {
         avatarUrl: parsed.data.avatarUrl,
         avatarPublicId: parsed.data.avatarPublicId,
-        ...(windowExpired ? { avatarChangeCount: 1, avatarChangeWindowStart: new Date() } : { avatarChangeCount: { increment: 1 } }),
+        ...(canBypassProfileLimits(user.role) ? {} : windowExpired ? { avatarChangeCount: 1, avatarChangeWindowStart: new Date() } : { avatarChangeCount: { increment: 1 } }),
       },
     });
     return NextResponse.json({ user: safeUser(updated) });
@@ -40,7 +41,7 @@ export async function DELETE(request: NextRequest) {
     const user = await getAuthenticatedUserFromRequest(request);
     if (!user.avatarPublicId) return badRequest('zaten avatar yok');
     const limit = canChangeAvatar(user.avatarChangeCount, user.avatarChangeWindowStart);
-    if (!limit.allowed) {
+    if (!canBypassProfileLimits(user.role) && !limit.allowed) {
       const nextAllowedAt = user.avatarChangeWindowStart ? new Date(user.avatarChangeWindowStart.getTime() + 24 * 60 * 60 * 1000) : undefined;
       return profileRateLimited(nextAllowedAt);
     }
@@ -51,7 +52,7 @@ export async function DELETE(request: NextRequest) {
       data: {
         avatarUrl: null,
         avatarPublicId: null,
-        ...(windowExpired ? { avatarChangeCount: 1, avatarChangeWindowStart: new Date() } : { avatarChangeCount: { increment: 1 } }),
+        ...(canBypassProfileLimits(user.role) ? {} : windowExpired ? { avatarChangeCount: 1, avatarChangeWindowStart: new Date() } : { avatarChangeCount: { increment: 1 } }),
       },
     });
     return NextResponse.json({ user: safeUser(updated) });

@@ -5,8 +5,9 @@ export const SESSION_ERROR = 'geçersiz veya süresi dolmuş oturum';
 export const OAUTH_ERROR = 'oauth isteği geçersiz';
 
 export function safeUser(user: User) {
-  const { passwordHash, ...publicUser } = user;
+  const { passwordHash, role, ...publicUser } = user;
   void passwordHash;
+  void role;
   return publicUser;
 }
 

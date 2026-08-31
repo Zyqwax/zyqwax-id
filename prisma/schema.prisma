@@ -13,6 +13,8 @@ model User {
   email                 String              @unique
   username              String              @unique
   passwordHash          String
+  // Bitmask: user=0, developer=1, admin=2; birleşik roller toplanır.
+  role                  Int                 @default(0)
   name                  String?
   avatar                String?
   avatarUrl             String?

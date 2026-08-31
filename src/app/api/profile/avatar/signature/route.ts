@@ -3,6 +3,7 @@ import { getCloudinary, getCloudinaryPublicConfig } from '@/lib/cloudinary';
 import { canChangeAvatar } from '@/lib/rateLimit/profileFields';
 import { getAuthenticatedUserFromRequest } from '@/lib/server/auth-service';
 import { errorResponse, profileRateLimited } from '@/lib/server/route-utils';
+import { canBypassProfileLimits } from '@/lib/server/roles';
 
 export const runtime = 'nodejs';
 
@@ -11,7 +12,7 @@ export async function POST(_request: NextRequest) {
   try {
     const user = await getAuthenticatedUserFromRequest(_request);
     const limit = canChangeAvatar(user.avatarChangeCount, user.avatarChangeWindowStart);
-    if (!limit.allowed) {
+    if (!canBypassProfileLimits(user.role) && !limit.allowed) {
       const nextAllowedAt = user.avatarChangeWindowStart ? new Date(user.avatarChangeWindowStart.getTime() + 24 * 60 * 60 * 1000) : undefined;
       // Yükleme imzasını vermeden önce kontrol ederek Cloudinary'de boşa dosya oluşmasını önler.
       return profileRateLimited(nextAllowedAt);
