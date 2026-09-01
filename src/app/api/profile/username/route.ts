@@ -18,7 +18,7 @@ export async function PATCH(request: NextRequest) {
     const body = await request.json();
     const currentPassword = typeof body?.currentPassword === 'string' ? body.currentPassword : '';
     if (!(await comparePassword(currentPassword, user.passwordHash))) throw new ServiceError(401, SESSION_ERROR);
-    if (!canBypassProfileLimits(user.role)) {
+    if (!(await canBypassProfileLimits(user.id))) {
       const limit = canChangeField(user.usernameChangedAt, 7 * 24 * 60 * 60 * 1000);
       if (!limit.allowed) return profileRateLimited(limit.nextAllowedAt);
     }

@@ -16,7 +16,7 @@ export async function PATCH(request: NextRequest) {
   try {
     const user = await getAuthenticatedUserFromRequest(request);
     const limit = canChangeAvatar(user.avatarChangeCount, user.avatarChangeWindowStart);
-    if (!canBypassProfileLimits(user.role) && !limit.allowed) {
+    if (!(await canBypassProfileLimits(user.id)) && !limit.allowed) {
       const nextAllowedAt = user.avatarChangeWindowStart ? new Date(user.avatarChangeWindowStart.getTime() + 24 * 60 * 60 * 1000) : undefined;
       return profileRateLimited(nextAllowedAt);
     }
@@ -28,7 +28,7 @@ export async function PATCH(request: NextRequest) {
       data: {
         avatarUrl: parsed.data.avatarUrl,
         avatarPublicId: parsed.data.avatarPublicId,
-        ...(canBypassProfileLimits(user.role) ? {} : windowExpired ? { avatarChangeCount: 1, avatarChangeWindowStart: new Date() } : { avatarChangeCount: { increment: 1 } }),
+        ...(await canBypassProfileLimits(user.id) ? {} : windowExpired ? { avatarChangeCount: 1, avatarChangeWindowStart: new Date() } : { avatarChangeCount: { increment: 1 } }),
       },
     });
     return NextResponse.json({ user: safeUser(updated) });
@@ -41,7 +41,7 @@ export async function DELETE(request: NextRequest) {
     const user = await getAuthenticatedUserFromRequest(request);
     if (!user.avatarPublicId) return badRequest('zaten avatar yok');
     const limit = canChangeAvatar(user.avatarChangeCount, user.avatarChangeWindowStart);
-    if (!canBypassProfileLimits(user.role) && !limit.allowed) {
+    if (!(await canBypassProfileLimits(user.id)) && !limit.allowed) {
       const nextAllowedAt = user.avatarChangeWindowStart ? new Date(user.avatarChangeWindowStart.getTime() + 24 * 60 * 60 * 1000) : undefined;
       return profileRateLimited(nextAllowedAt);
     }
@@ -52,7 +52,7 @@ export async function DELETE(request: NextRequest) {
       data: {
         avatarUrl: null,
         avatarPublicId: null,
-        ...(canBypassProfileLimits(user.role) ? {} : windowExpired ? { avatarChangeCount: 1, avatarChangeWindowStart: new Date() } : { avatarChangeCount: { increment: 1 } }),
+        ...(await canBypassProfileLimits(user.id) ? {} : windowExpired ? { avatarChangeCount: 1, avatarChangeWindowStart: new Date() } : { avatarChangeCount: { increment: 1 } }),
       },
     });
     return NextResponse.json({ user: safeUser(updated) });

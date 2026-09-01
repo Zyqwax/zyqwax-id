@@ -3,9 +3,9 @@ export type SafeUser = {
   email: string;
   name: string | null;
   username?: string;
-  avatar?: string | null;
   avatarUrl?: string | null;
   avatarPublicId?: string | null;
+  roles?: string[];
   emailVerified?: boolean;
   usernameChangedAt?: string | null;
   emailChangedAt?: string | null;

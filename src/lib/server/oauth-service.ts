@@ -60,5 +60,5 @@ export async function getUserInfo(request: NextRequest) {
   const requestedScope = typeof request.nextUrl.searchParams.get('scope') === 'string' ? normalizeScope(request.nextUrl.searchParams.get('scope') || '') : 'profile email';
   if (!requestedScope) throw new ServiceError(400, 'desteklenmeyen scope');
   const scopes = new Set(requestedScope.split(' '));
-  return { sub: user.id, ...(scopes.has('email') ? { email: user.email } : {}), ...(scopes.has('profile') ? { name: user.name, avatar: user.avatar } : {}) };
+  return { sub: user.id, ...(scopes.has('email') ? { email: user.email } : {}), ...(scopes.has('profile') ? { name: user.name, avatarUrl: user.avatarUrl } : {}) };
 }

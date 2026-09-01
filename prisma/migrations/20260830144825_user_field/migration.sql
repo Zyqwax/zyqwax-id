@@ -6,7 +6,18 @@
 
 */
 -- CreateEnum
-CREATE TYPE "FriendRequestStatus" AS ENUM ('PENDING', 'DECLINED', 'ACCEPTED');
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE t.typname = 'FriendRequestStatus'
+          AND n.nspname = 'public'
+    ) THEN
+        CREATE TYPE "FriendRequestStatus" AS ENUM ('PENDING', 'DECLINED', 'ACCEPTED');
+    END IF;
+END $$;
 
 -- AlterTable
 ALTER TABLE "User" ADD COLUMN     "avatarChangeCount" INTEGER NOT NULL DEFAULT 0,

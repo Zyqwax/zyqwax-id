@@ -4,6 +4,7 @@ import { comparePassword, hashPassword } from './password';
 import { generateAccessToken, generateRefreshToken, hashRefreshToken, verifyAccessToken } from './jwt';
 import { AUTH_ERROR, bearerToken, safeUser, SESSION_ERROR } from './http';
 import { normalizeEmail } from './validation';
+import { ROLE_ID } from './roles';
 
 export class ServiceError extends Error {
   constructor(public readonly status: number, message: string) { super(message); this.name = 'ServiceError'; }
@@ -28,7 +29,10 @@ export async function registerUser(body: Registration): Promise<{ user: ReturnTy
     if (existingEmail) throw new ServiceError(409, 'bu e-posta adresi zaten kayıtlı');
     const existingUsername = await prisma.user.findUnique({ where: { username: body.username }, select: { id: true } });
     if (existingUsername) throw new ServiceError(409, 'bu kullanıcı adı alınmış');
-    const user = await prisma.user.create({ data: { email, username: body.username, passwordHash: await hashPassword(body.password) } });
+    const user = await prisma.user.create({
+      data: { email, username: body.username, passwordHash: await hashPassword(body.password), roles: { create: { roleId: ROLE_ID.defaultUser } } },
+      include: { roles: { select: { roleId: true } } },
+    });
     const accessToken = generateAccessToken(user.id);
     const refreshToken = generateRefreshToken(user.id);
     await saveRefreshToken(user.id, refreshToken);
@@ -42,7 +46,7 @@ export async function registerUser(body: Registration): Promise<{ user: ReturnTy
 export async function loginUser(body: Credentials, meta: RequestMeta): Promise<{ user: ReturnType<typeof safeUser>; accessToken: string; refreshToken: string }> {
   // Tek bir alanla hem e-posta hem username üzerinden kullanıcı bulunur.
   const identifier = body.identifier.trim().toLowerCase();
-  const user = await prisma.user.findFirst({ where: { OR: [{ email: normalizeEmail(identifier) }, { username: identifier }] } });
+  const user = await prisma.user.findFirst({ where: { OR: [{ email: normalizeEmail(identifier) }, { username: identifier }] }, include: { roles: { select: { roleId: true } } } });
   const valid = user ? await comparePassword(body.password, user.passwordHash) : false;
   if (!user || !valid || !user.isActive) {
     if (user) await recordLogin(user.id, meta, false);
@@ -57,7 +61,7 @@ export async function loginUser(body: Credentials, meta: RequestMeta): Promise<{
 
 export async function refreshUser(rawToken: string | undefined): Promise<{ accessToken: string; refreshToken: string }> {
   if (!rawToken) throw new ServiceError(401, SESSION_ERROR);
-  const current = await prisma.refreshToken.findFirst({ where: { tokenHash: hashRefreshToken(rawToken), revoked: false, expiresAt: { gt: new Date() } }, include: { user: true } });
+  const current = await prisma.refreshToken.findFirst({ where: { tokenHash: hashRefreshToken(rawToken), revoked: false, expiresAt: { gt: new Date() } }, include: { user: { include: { roles: { select: { roleId: true } } } } } });
   if (!current || !current.user.isActive) throw new ServiceError(401, SESSION_ERROR);
   const newRefreshToken = generateRefreshToken(current.userId);
   await prisma.$transaction(async (tx) => {
@@ -78,7 +82,7 @@ export async function getUserFromAccessToken(header: string | null) {
   try {
     const payload = verifyAccessToken(token);
     if (typeof payload.sub !== 'string' || !payload.sub) throw new Error('invalid subject');
-    const user = await prisma.user.findUnique({ where: { id: payload.sub } });
+    const user = await prisma.user.findUnique({ where: { id: payload.sub }, include: { roles: { select: { roleId: true } } } });
     if (!user || !user.isActive) throw new Error('inactive user');
     return user;
   } catch { throw new ServiceError(401, SESSION_ERROR); }
@@ -89,7 +93,7 @@ export async function getUserFromRefreshToken(rawToken: string | undefined) {
   if (!rawToken) throw new ServiceError(401, SESSION_ERROR);
   const current = await prisma.refreshToken.findFirst({
     where: { tokenHash: hashRefreshToken(rawToken), revoked: false, expiresAt: { gt: new Date() } },
-    include: { user: true },
+    include: { user: { include: { roles: { select: { roleId: true } } } } },
   });
   if (!current || !current.user.isActive) throw new ServiceError(401, SESSION_ERROR);
   return current.user;

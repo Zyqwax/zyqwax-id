@@ -12,7 +12,7 @@ export async function POST(_request: NextRequest) {
   try {
     const user = await getAuthenticatedUserFromRequest(_request);
     const limit = canChangeAvatar(user.avatarChangeCount, user.avatarChangeWindowStart);
-    if (!canBypassProfileLimits(user.role) && !limit.allowed) {
+    if (!(await canBypassProfileLimits(user.id)) && !limit.allowed) {
       const nextAllowedAt = user.avatarChangeWindowStart ? new Date(user.avatarChangeWindowStart.getTime() + 24 * 60 * 60 * 1000) : undefined;
       // Yükleme imzasını vermeden önce kontrol ederek Cloudinary'de boşa dosya oluşmasını önler.
       return profileRateLimited(nextAllowedAt);

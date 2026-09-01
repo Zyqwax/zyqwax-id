@@ -159,7 +159,7 @@ export default function DashboardPage() {
     }
   }
 
-  const avatar = user.avatarUrl || user.avatar;
+  const avatar = user.avatarUrl;
   const needsPassword = username !== currentUser.username || email !== currentUser.email;
 
   function selectAvatarFile(event: React.ChangeEvent<HTMLInputElement>) {

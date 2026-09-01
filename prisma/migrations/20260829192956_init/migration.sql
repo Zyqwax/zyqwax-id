@@ -1,5 +1,16 @@
 -- CreateEnum
-CREATE TYPE "VerificationTokenType" AS ENUM ('EMAIL_VERIFY', 'PASSWORD_RESET');
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE t.typname = 'VerificationTokenType'
+          AND n.nspname = 'public'
+    ) THEN
+        CREATE TYPE "VerificationTokenType" AS ENUM ('EMAIL_VERIFY', 'PASSWORD_RESET');
+    END IF;
+END $$;
 
 -- CreateTable
 CREATE TABLE "User" (

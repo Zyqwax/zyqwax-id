@@ -14,7 +14,7 @@ const nameSchema = z.string().trim().min(1).max(50);
 export async function PATCH(request: NextRequest) {
   try {
     const user = await getAuthenticatedUserFromRequest(request);
-    if (!canBypassProfileLimits(user.role)) {
+    if (!(await canBypassProfileLimits(user.id))) {
       const limit = canChangeField(user.nameChangedAt, 24 * 60 * 60 * 1000);
       if (!limit.allowed) return profileRateLimited(limit.nextAllowedAt);
     }
