@@ -9,9 +9,9 @@ datasource db {
 
 // Merkezi kimlik bilgilerini tutar; id, bağlı uygulamaların kendi veritabanlarında kullanacağı tek ortak UUID anahtardır.
 model User {
-  id                      String               @id @default(uuid())
-  email                   String               @unique
-  username                String               @unique
+  id                      String                @id @default(uuid())
+  email                   String                @unique
+  username                String                @unique
   passwordHash            String
   name                    String?
   avatarUrl               String?
@@ -19,22 +19,23 @@ model User {
   usernameChangedAt       DateTime?
   emailChangedAt          DateTime?
   nameChangedAt           DateTime?
-  avatarChangeCount       Int                  @default(0)
+  avatarChangeCount       Int                   @default(0)
   avatarChangeWindowStart DateTime?
-  emailVerified           Boolean              @default(false)
-  isActive                Boolean              @default(true)
-  createdAt               DateTime             @default(now())
-  updatedAt               DateTime             @updatedAt
+  emailVerified           Boolean               @default(false)
+  isActive                Boolean               @default(true)
+  createdAt               DateTime              @default(now())
+  updatedAt               DateTime              @updatedAt
   refreshTokens           RefreshToken[]
   verificationTokens      VerificationToken[]
   loginHistories          LoginHistory[]
   authorizationCodes      AuthorizationCode[]
-  sentRequests            FriendRequest[]      @relation("SentRequests")
-  receivedRequests        FriendRequest[]      @relation("ReceivedRequests")
-  friendshipsAsA          Friendship[]         @relation("FriendshipsAsA")
-  friendshipsAsB          Friendship[]         @relation("FriendshipsAsB")
-  blocksSent              Block[]              @relation("BlocksSent")
-  blocksReceived          Block[]              @relation("BlocksReceived")
+  consentRequests         OAuthConsentRequest[]
+  sentRequests            FriendRequest[]       @relation("SentRequests")
+  receivedRequests        FriendRequest[]       @relation("ReceivedRequests")
+  friendshipsAsA          Friendship[]          @relation("FriendshipsAsA")
+  friendshipsAsB          Friendship[]          @relation("FriendshipsAsB")
+  blocksSent              Block[]               @relation("BlocksSent")
+  blocksReceived          Block[]               @relation("BlocksReceived")
   roles                   UserRoleAssignment[]
 }
 
@@ -78,15 +79,16 @@ model RolePermission {
 
 // SSO'ya bağlanan uygulama kayıtlarını ve gizli anahtar özetlerini tutar; id JWT aud claim'i için kullanılabilir.
 model App {
-  id                 String              @id @default(uuid())
-  clientId           String              @unique @default(uuid())
+  id                 String                @id @default(uuid())
+  clientId           String                @unique @default(uuid())
   name               String
   secretKeyHash      String
   redirectUris       String[]
   allowedOrigins     String[]
-  createdAt          DateTime            @default(now())
+  createdAt          DateTime              @default(now())
   refreshTokens      RefreshToken[]
   authorizationCodes AuthorizationCode[]
+  consentRequests    OAuthConsentRequest[]
 }
 
 // Kullanıcı-uygulama oturumlarını temsil eder; düz token yerine yalnızca token özeti saklanır.
@@ -151,6 +153,26 @@ model AuthorizationCode {
   app                 App      @relation(fields: [appId], references: [id], onDelete: Cascade)
 
   @@index([appId, used, expiresAt])
+}
+
+// Kullanıcının OAuth yetkilendirme onayını bekleyen, kısa ömürlü tek kullanımlık istek.
+model OAuthConsentRequest {
+  id                  String   @id @default(uuid())
+  tokenHash           String   @unique
+  userId              String
+  appId               String
+  redirectUri         String
+  scope               String
+  state               String?
+  codeChallenge       String
+  codeChallengeMethod String   @default("S256")
+  expiresAt           DateTime
+  used                Boolean  @default(false)
+  createdAt           DateTime @default(now())
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  app                 App      @relation(fields: [appId], references: [id], onDelete: Cascade)
+
+  @@index([userId, used, expiresAt])
 }
 
 enum FriendRequestStatus {

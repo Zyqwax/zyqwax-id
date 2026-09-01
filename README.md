@@ -68,6 +68,8 @@ OAUTH_LOGIN_URL=https://<your-domain>/login
 
 OAuth endpoint'leri authorization code + PKCE S256, exact registered redirect URI, kısa ömürlü tek kullanımlık code ve constant-time challenge karşılaştırmasını korur. Token endpoint client secret'ı server-side karşılaştırır.
 
+OAuth scope'ları `profile` (`username`, `name`, `avatarUrl`), `email` (`email`), `friends` (arkadaş listesi) ve `blocks` (engellenenler listesi) şeklindedir. `sub` her `/oauth/userinfo` yanıtında bulunur. Scope'lar authorization code ile access token'a taşınır; userinfo isteğindeki query parametreleri scope yükseltmez.
+
 `/oauth/authorize` Bearer access token sözleşmesini korur. Access token'ı query/hash'e koyan bir browser bypass uygulanmamıştır. Native same-origin bir OAuth client akışı eklenecekse `state` ve `code_verifier` server-side, kısa ömürlü bir continuation/session ile bağlanmalı; client secret browser bundle'ına girmemelidir.
 
 ## Vercel geçişi

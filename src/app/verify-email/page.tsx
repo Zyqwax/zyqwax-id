@@ -5,6 +5,7 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ApiError, verifyEmail } from "@/lib/api";
 import { CircleCheck, CircleX, Loader2 } from "lucide-react";
+import { PageLoader } from "@/components/page-loader";
 
 type VerifyState = "loading" | "success" | "error";
 
@@ -141,11 +142,7 @@ export default function VerifyEmailPage() {
 
       <Suspense
         fallback={
-          <div className="flex items-center justify-center p-6 sm:p-12">
-            <div className="w-full max-w-sm rounded-xl border border-zinc-800 p-8 text-center text-zinc-400">
-              Yükleniyor…
-            </div>
-          </div>
+          <PageLoader label="Doğrulama hazırlanıyor…" />
         }
       >
         <VerifyEmailContent />

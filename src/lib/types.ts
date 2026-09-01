@@ -6,6 +6,7 @@ export type SafeUser = {
   avatarUrl?: string | null;
   avatarPublicId?: string | null;
   roles?: string[];
+  permissions?: string[];
   emailVerified?: boolean;
   usernameChangedAt?: string | null;
   emailChangedAt?: string | null;

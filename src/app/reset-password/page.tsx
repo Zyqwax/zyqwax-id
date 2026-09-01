@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { ApiError, resetPassword } from "@/lib/api";
 import { LockOpen, TriangleAlert } from "lucide-react";
+import { PageLoader } from "@/components/page-loader";
 
 // URL token'ı ve yeni parola alanlarını yönetir.
 function ResetPasswordContent() {
@@ -166,11 +167,7 @@ export default function ResetPasswordPage() {
 
       <Suspense
         fallback={
-          <div className="flex items-center justify-center p-6 sm:p-12">
-            <div className="w-full max-w-sm rounded-xl border border-zinc-800 p-8 text-center text-zinc-400">
-              Yükleniyor…
-            </div>
-          </div>
+          <PageLoader label="Bağlantı kontrol ediliyor…" />
         }
       >
         <ResetPasswordContent />

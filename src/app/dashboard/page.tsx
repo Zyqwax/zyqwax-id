@@ -6,6 +6,7 @@ import type { SafeUser } from "@/lib/types";
 import { AvatarEditorModal } from "@/components/dashboard/AvatarEditorModal";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { ImageUp, SquarePen, Check, X } from "lucide-react";
+import { PageLoader } from "@/components/page-loader";
 
 type ModalName = "avatar" | null;
 
@@ -61,11 +62,7 @@ export default function DashboardPage() {
   const emailCooldown = useMemo(() => cooldownDate(user?.emailChangedAt, 7), [user?.emailChangedAt]);
 
   if (loading)
-    return (
-      <div className="mx-auto max-w-4xl p-6 sm:p-12">
-        <div className="rounded-xl border border-zinc-800 p-8 text-zinc-400">Profil yükleniyor…</div>
-      </div>
-    );
+    return <PageLoader label="Profil yükleniyor…" />;
 
   if (error || !user)
     return (

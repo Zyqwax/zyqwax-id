@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { ApiError, fetchBlocked, unblockUser, type FriendListItem } from "@/lib/api";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { ShieldOff, UserX } from "lucide-react";
+import { PageLoader } from "@/components/page-loader";
 
 type BlockedItem = { id: string; createdAt: string; user: FriendListItem };
 
@@ -55,7 +56,7 @@ export default function BlockedPage() {
         </div>
 
         {loading ? (
-          <div className="rounded-xl border border-zinc-800 p-8 text-zinc-400">Engellenenler yükleniyor…</div>
+          <PageLoader label="Engellenenler yükleniyor…" />
         ) : error ? (
           <div className="rounded-xl border border-red-900 bg-red-950/30 p-8 text-red-300" role="alert">
             {error}

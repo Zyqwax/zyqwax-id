@@ -7,7 +7,7 @@ import { fetchReceivedRequestCount } from "@/lib/api";
 import { useAuth } from "@/components/auth-provider";
 import { useSidebar } from "./SidebarContext";
 import { UserAvatar } from "@/components/ui/UserAvatar";
-import { CircleOff, LogOut, UserRoundPen, UserRoundSearch } from "lucide-react";
+import { CircleOff, LogOut, ShieldCheck, UserRoundPen, UserRoundSearch } from "lucide-react";
 
 const navigation = [
   { href: "/dashboard", label: "Profil", icon: <UserRoundPen size={20} /> },
@@ -77,6 +77,10 @@ export function Sidebar() {
                 />
               ))}
             </div>
+            {user?.permissions?.includes("admin.access") && <div>
+              <p className="mb-3 px-3 text-xs font-semibold tracking-wider text-zinc-500">YÖNETİM</p>
+              <NavItem item={{ href: "/admin", label: "Admin", icon: <ShieldCheck size={20} /> }} pathname={pathname} onNavigate={() => setMobileOpen(false)} />
+            </div>}
           </nav>
         </div>
         <div className="space-y-5">

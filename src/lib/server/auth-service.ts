@@ -4,7 +4,7 @@ import { comparePassword, hashPassword } from './password';
 import { generateAccessToken, generateRefreshToken, hashRefreshToken, verifyAccessToken } from './jwt';
 import { AUTH_ERROR, bearerToken, safeUser, SESSION_ERROR } from './http';
 import { normalizeEmail } from './validation';
-import { ROLE_ID } from './roles';
+import { ROLE_ID, userAccessInclude } from './roles';
 
 export class ServiceError extends Error {
   constructor(public readonly status: number, message: string) { super(message); this.name = 'ServiceError'; }
@@ -31,7 +31,7 @@ export async function registerUser(body: Registration): Promise<{ user: ReturnTy
     if (existingUsername) throw new ServiceError(409, 'bu kullanıcı adı alınmış');
     const user = await prisma.user.create({
       data: { email, username: body.username, passwordHash: await hashPassword(body.password), roles: { create: { roleId: ROLE_ID.defaultUser } } },
-      include: { roles: { select: { roleId: true } } },
+      include: userAccessInclude,
     });
     const accessToken = generateAccessToken(user.id);
     const refreshToken = generateRefreshToken(user.id);
@@ -46,7 +46,7 @@ export async function registerUser(body: Registration): Promise<{ user: ReturnTy
 export async function loginUser(body: Credentials, meta: RequestMeta): Promise<{ user: ReturnType<typeof safeUser>; accessToken: string; refreshToken: string }> {
   // Tek bir alanla hem e-posta hem username üzerinden kullanıcı bulunur.
   const identifier = body.identifier.trim().toLowerCase();
-  const user = await prisma.user.findFirst({ where: { OR: [{ email: normalizeEmail(identifier) }, { username: identifier }] }, include: { roles: { select: { roleId: true } } } });
+  const user = await prisma.user.findFirst({ where: { OR: [{ email: normalizeEmail(identifier) }, { username: identifier }] }, include: userAccessInclude });
   const valid = user ? await comparePassword(body.password, user.passwordHash) : false;
   if (!user || !valid || !user.isActive) {
     if (user) await recordLogin(user.id, meta, false);
@@ -61,7 +61,7 @@ export async function loginUser(body: Credentials, meta: RequestMeta): Promise<{
 
 export async function refreshUser(rawToken: string | undefined): Promise<{ accessToken: string; refreshToken: string }> {
   if (!rawToken) throw new ServiceError(401, SESSION_ERROR);
-  const current = await prisma.refreshToken.findFirst({ where: { tokenHash: hashRefreshToken(rawToken), revoked: false, expiresAt: { gt: new Date() } }, include: { user: { include: { roles: { select: { roleId: true } } } } } });
+  const current = await prisma.refreshToken.findFirst({ where: { tokenHash: hashRefreshToken(rawToken), revoked: false, expiresAt: { gt: new Date() } }, include: { user: { include: userAccessInclude } } });
   if (!current || !current.user.isActive) throw new ServiceError(401, SESSION_ERROR);
   const newRefreshToken = generateRefreshToken(current.userId);
   await prisma.$transaction(async (tx) => {
@@ -76,16 +76,20 @@ export async function revokeRefreshToken(rawToken: string | undefined): Promise<
   if (rawToken) await prisma.refreshToken.updateMany({ where: { tokenHash: hashRefreshToken(rawToken), revoked: false }, data: { revoked: true } });
 }
 
-export async function getUserFromAccessToken(header: string | null) {
+export async function getUserWithAccessToken(header: string | null) {
   const token = bearerToken(header);
   if (!token) throw new ServiceError(401, SESSION_ERROR);
   try {
     const payload = verifyAccessToken(token);
     if (typeof payload.sub !== 'string' || !payload.sub) throw new Error('invalid subject');
-    const user = await prisma.user.findUnique({ where: { id: payload.sub }, include: { roles: { select: { roleId: true } } } });
+    const user = await prisma.user.findUnique({ where: { id: payload.sub }, include: userAccessInclude });
     if (!user || !user.isActive) throw new Error('inactive user');
-    return user;
+    return { user, payload };
   } catch { throw new ServiceError(401, SESSION_ERROR); }
+}
+
+export async function getUserFromAccessToken(header: string | null) {
+  return (await getUserWithAccessToken(header)).user;
 }
 
 // Tarayıcı yönlendirmelerinde header gelmediği için geçerli refresh cookie'si de kimlik kanıtıdır.
@@ -93,7 +97,7 @@ export async function getUserFromRefreshToken(rawToken: string | undefined) {
   if (!rawToken) throw new ServiceError(401, SESSION_ERROR);
   const current = await prisma.refreshToken.findFirst({
     where: { tokenHash: hashRefreshToken(rawToken), revoked: false, expiresAt: { gt: new Date() } },
-    include: { user: { include: { roles: { select: { roleId: true } } } } },
+    include: { user: { include: userAccessInclude } },
   });
   if (!current || !current.user.isActive) throw new ServiceError(401, SESSION_ERROR);
   return current.user;

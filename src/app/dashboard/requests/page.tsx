@@ -11,6 +11,7 @@ import {
 } from "@/lib/api";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { Check, Inbox, Send, UserPlus, X } from "lucide-react";
+import { PageLoader } from "@/components/page-loader";
 
 // Gelen ve gönderilen arkadaşlık isteklerini sekmeler ve aksiyonlarla yönetir.
 export default function RequestsPage() {
@@ -140,7 +141,7 @@ export default function RequestsPage() {
         </div>
 
         {loading ? (
-          <div className="rounded-xl border border-zinc-800 p-8 text-zinc-400">İstekler yükleniyor…</div>
+          <PageLoader label="İstekler yükleniyor…" />
         ) : error ? (
           <div className="rounded-xl border border-red-900 bg-red-950/30 p-8 text-red-300" role="alert">
             {error}

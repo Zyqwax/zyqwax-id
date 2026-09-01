@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { AuthForm } from "@/components/auth-form";
 import { PublicRoute } from "@/components/public-route";
+import { PageLoader } from "@/components/page-loader";
 
 export const metadata = { title: "Kayıt ol" };
 
@@ -73,9 +74,7 @@ export default function RegisterPage() {
             <div className="mt-8">
               <Suspense
                 fallback={
-                  <div className="rounded-xl border border-zinc-800 p-8 text-center text-zinc-400" role="status">
-                    Form yükleniyor…
-                  </div>
+                  <PageLoader label="Form hazırlanıyor…" />
                 }
               >
                 <AuthForm mode="register" />

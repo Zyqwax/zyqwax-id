@@ -15,8 +15,9 @@ const avatarSchema = z.object({ avatarUrl: z.string().trim().url().max(2048), av
 export async function PATCH(request: NextRequest) {
   try {
     const user = await getAuthenticatedUserFromRequest(request);
+    const bypassLimits = await canBypassProfileLimits(user.id);
     const limit = canChangeAvatar(user.avatarChangeCount, user.avatarChangeWindowStart);
-    if (!(await canBypassProfileLimits(user.id)) && !limit.allowed) {
+    if (!bypassLimits && !limit.allowed) {
       const nextAllowedAt = user.avatarChangeWindowStart ? new Date(user.avatarChangeWindowStart.getTime() + 24 * 60 * 60 * 1000) : undefined;
       return profileRateLimited(nextAllowedAt);
     }
@@ -28,7 +29,7 @@ export async function PATCH(request: NextRequest) {
       data: {
         avatarUrl: parsed.data.avatarUrl,
         avatarPublicId: parsed.data.avatarPublicId,
-        ...(await canBypassProfileLimits(user.id) ? {} : windowExpired ? { avatarChangeCount: 1, avatarChangeWindowStart: new Date() } : { avatarChangeCount: { increment: 1 } }),
+        ...(bypassLimits ? {} : windowExpired ? { avatarChangeCount: 1, avatarChangeWindowStart: new Date() } : { avatarChangeCount: { increment: 1 } }),
       },
     });
     return NextResponse.json({ user: safeUser(updated) });
@@ -39,9 +40,10 @@ export async function PATCH(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const user = await getAuthenticatedUserFromRequest(request);
+    const bypassLimits = await canBypassProfileLimits(user.id);
     if (!user.avatarPublicId) return badRequest('zaten avatar yok');
     const limit = canChangeAvatar(user.avatarChangeCount, user.avatarChangeWindowStart);
-    if (!(await canBypassProfileLimits(user.id)) && !limit.allowed) {
+    if (!bypassLimits && !limit.allowed) {
       const nextAllowedAt = user.avatarChangeWindowStart ? new Date(user.avatarChangeWindowStart.getTime() + 24 * 60 * 60 * 1000) : undefined;
       return profileRateLimited(nextAllowedAt);
     }
@@ -52,7 +54,7 @@ export async function DELETE(request: NextRequest) {
       data: {
         avatarUrl: null,
         avatarPublicId: null,
-        ...(await canBypassProfileLimits(user.id) ? {} : windowExpired ? { avatarChangeCount: 1, avatarChangeWindowStart: new Date() } : { avatarChangeCount: { increment: 1 } }),
+        ...(bypassLimits ? {} : windowExpired ? { avatarChangeCount: 1, avatarChangeWindowStart: new Date() } : { avatarChangeCount: { increment: 1 } }),
       },
     });
     return NextResponse.json({ user: safeUser(updated) });
