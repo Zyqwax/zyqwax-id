@@ -1,14 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ApiError, fetchMe, resendVerification, updateProfileField } from "@/lib/api";
+import { useRouter } from "next/navigation";
+import { ApiError, deleteAccount, fetchMe, resendVerification, updateProfileField } from "@/lib/api";
+import { clearSession } from "@/lib/auth-store";
 import type { SafeUser } from "@/lib/types";
 import { AvatarEditorModal } from "@/components/dashboard/AvatarEditorModal";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { ImageUp, SquarePen, Check, X } from "lucide-react";
 import { PageLoader } from "@/components/page-loader";
+import { Modal } from "@/components/ui/Modal";
 
-type ModalName = "avatar" | null;
+type ModalName = "avatar" | "delete-account" | null;
 
 function cooldownDate(value: string | null | undefined, days: number) {
   if (!value) return null;
@@ -22,6 +25,7 @@ const inputClass =
   "transition focus:border-zinc-400 disabled:cursor-not-allowed disabled:opacity-60 disabled:border-zinc-800";
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [user, setUser] = useState<SafeUser | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -32,6 +36,8 @@ export default function DashboardPage() {
   const [saving, setSaving] = useState(false);
   const [resending, setResending] = useState(false);
   const [verificationMessage, setVerificationMessage] = useState("");
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const [deletingAccount, setDeletingAccount] = useState(false);
 
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
@@ -169,6 +175,26 @@ export default function DashboardPage() {
   function closeAvatarEditor() {
     setAvatarFile(null);
     setModal(null);
+  }
+
+  function closeDeleteModal() {
+    if (deletingAccount) return;
+    setDeleteConfirmation("");
+    setModal(null);
+  }
+
+  async function confirmAccountDeletion() {
+    if (deleteConfirmation !== "HESABIMI SİL") return;
+    setDeletingAccount(true);
+    setError("");
+    try {
+      await deleteAccount();
+      clearSession();
+      router.replace("/login?deleted=1");
+    } catch (cause) {
+      setError(cause instanceof ApiError ? cause.message : "Hesap silinemedi.");
+      setDeletingAccount(false);
+    }
   }
 
   return (
@@ -340,6 +366,22 @@ export default function DashboardPage() {
         )}
       </section>
 
+      <section className="mt-10 rounded-xl border border-red-900/70 bg-red-950/20 p-6" aria-labelledby="danger-zone-heading">
+        <h2 id="danger-zone-heading" className="text-lg font-medium text-red-300">
+          Riskli Bölge
+        </h2>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-400">
+          Hesabını sildiğinde profilin, oturumların, arkadaşlıkların ve bu hesaba bağlı diğer kayıtlar kalıcı olarak silinir. Bu işlem geri alınamaz.
+        </p>
+        <button
+          type="button"
+          className="mt-5 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-500 cursor-pointer"
+          onClick={() => setModal("delete-account")}
+        >
+          Hesabımı sil
+        </button>
+      </section>
+
       {modal === "avatar" && (
         <AvatarEditorModal
           user={user}
@@ -350,6 +392,48 @@ export default function DashboardPage() {
             closeAvatarEditor();
           }}
         />
+      )}
+
+      {modal === "delete-account" && (
+        <Modal title="Hesabını sil" onClose={closeDeleteModal}>
+          <div className="space-y-5">
+            <div className="rounded-lg border border-red-900/70 bg-red-950/40 p-4 text-sm leading-6 text-red-200">
+              Bu işlem geri alınamaz. Hesabın ve hesaba ait silinebilen tüm veriler kalıcı olarak silinecek.
+            </div>
+            <div>
+              <label htmlFor="delete-account-confirmation" className="text-sm font-medium text-zinc-300">
+                Devam etmek için <span className="font-semibold text-white">HESABIMI SİL</span> yaz.
+              </label>
+              <input
+                id="delete-account-confirmation"
+                type="text"
+                autoComplete="off"
+                className={`${inputClass} border-red-900 focus:border-red-400`}
+                value={deleteConfirmation}
+                onChange={(event) => setDeleteConfirmation(event.target.value)}
+                disabled={deletingAccount}
+              />
+            </div>
+            <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                className="rounded-lg border border-zinc-700 px-4 py-2.5 text-sm text-zinc-300 transition hover:bg-zinc-800 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={closeDeleteModal}
+                disabled={deletingAccount}
+              >
+                İptal
+              </button>
+              <button
+                type="button"
+                className="rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-500 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={() => void confirmAccountDeletion()}
+                disabled={deletingAccount || deleteConfirmation !== "HESABIMI SİL"}
+              >
+                {deletingAccount ? "Siliniyor…" : "HESABIMI SİL"}
+              </button>
+            </div>
+          </div>
+        </Modal>
       )}
     </div>
   );

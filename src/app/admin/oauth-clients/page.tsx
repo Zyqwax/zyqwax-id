@@ -9,6 +9,7 @@ type Client = {
   redirectUris: string[];
   allowedOrigins: string[];
   createdAt: string;
+  owner: { id: string; username: string; name: string | null; email: string } | null;
 };
 type Form = { name: string; redirectUris: string; allowedOrigins: string };
 const blank: Form = { name: "", redirectUris: "", allowedOrigins: "" };
@@ -144,6 +145,9 @@ export default function OAuthClientsPage() {
               <div>
                 <h2 className="font-semibold">{client.name}</h2>
                 <code className="text-xs text-zinc-500">{client.clientId}</code>
+                <p className="mt-2 text-xs text-zinc-300">
+                  Owner: {client.owner ? `${client.owner.username} (${client.owner.email})` : "Sahipsiz"}
+                </p>
                 <p className="mt-3 text-xs text-zinc-400">Redirect: {client.redirectUris.join(", ")}</p>
                 <p className="text-xs text-zinc-400">Origin: {client.allowedOrigins.join(", ") || "—"}</p>
               </div>

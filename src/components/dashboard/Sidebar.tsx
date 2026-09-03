@@ -49,7 +49,7 @@ export function Sidebar() {
       )}
       <aside
         id="dashboard-sidebar"
-        className={`fixed inset-y-0 left-0 z-30 flex h-screen max-h-screen w-72 max-w-[100vw] shrink-0 -translate-x-full flex-col justify-between overflow-y-auto overflow-x-hidden border-r border-zinc-700 bg-zinc-900 p-5 transition-transform md:static md:translate-x-0 ${mobileOpen ? "translate-x-0" : ""}`}
+        className={`fixed inset-y-0 left-0 z-30 flex h-dvh max-h-dvh w-72 max-w-[100vw] shrink-0 -translate-x-full flex-col justify-between overflow-y-auto overflow-x-hidden border-r border-zinc-700 bg-zinc-900 p-5 transition-transform md:static md:translate-x-0 ${mobileOpen ? "translate-x-0" : ""}`}
       >
         <div>
           <div className="mb-10 flex items-center justify-between">

@@ -21,6 +21,7 @@ function publicClient(client: {
   redirectUris: string[];
   allowedOrigins: string[];
   createdAt: Date;
+  owner?: { id: string; username: string; name: string | null; email: string } | null;
 }) {
   return client;
 }
@@ -29,7 +30,15 @@ export async function GET(request: NextRequest) {
   try {
     await requirePermission(request, PERMISSION.oauthClientsRead);
     const clients = await prisma.app.findMany({
-      select: { id: true, clientId: true, name: true, redirectUris: true, allowedOrigins: true, createdAt: true },
+      select: {
+        id: true,
+        clientId: true,
+        name: true,
+        redirectUris: true,
+        allowedOrigins: true,
+        createdAt: true,
+        owner: { select: { id: true, username: true, name: true, email: true } },
+      },
       orderBy: { createdAt: "desc" },
     });
     return NextResponse.json({ clients: clients.map(publicClient) });

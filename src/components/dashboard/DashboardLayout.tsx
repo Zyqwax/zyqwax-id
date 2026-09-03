@@ -6,7 +6,7 @@ import { DashboardHeader } from "./DashboardHeader";
 export function DashboardLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <SidebarProvider>
-      <div className="flex h-screen max-h-screen w-full overflow-hidden bg-zinc-950 text-zinc-100">
+      <div className="flex h-dvh max-h-dvh w-full overflow-hidden bg-zinc-950 text-zinc-100">
         <Sidebar />
         <main className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto">
           <DashboardHeader />

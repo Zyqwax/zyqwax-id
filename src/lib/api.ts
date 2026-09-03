@@ -176,4 +176,12 @@ export function logout(): Promise<{ message: string }> {
   return request<{ message: string }>('/api/auth/logout', { method: 'POST', skipRefresh: true });
 }
 
+export function deleteAccount(): Promise<{ message: string }> {
+  return request<{ message: string }>('/api/profile', {
+    method: 'DELETE',
+    body: JSON.stringify({ confirmation: 'HESABIMI SİL' }),
+    skipRefresh: true,
+  });
+}
+
 export { refreshAccessToken };
