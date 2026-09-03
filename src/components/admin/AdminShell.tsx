@@ -3,10 +3,10 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
-import { LayoutDashboard, LogIn, LogOut, Menu, ShieldCheck, Users, X } from 'lucide-react';
+import { KeyRound, LayoutDashboard, LogIn, LogOut, Menu, ShieldCheck, Users, X } from 'lucide-react';
 import { useAuth } from '@/components/auth-provider';
 
-const links = [{ href: '/admin', label: 'Genel bakış', icon: LayoutDashboard }, { href: '/admin/users', label: 'Kullanıcılar', icon: Users }, { href: '/admin/login-history', label: 'Login kayıtları', icon: LogIn }, { href: '/admin/oauth-clients', label: 'OAuth clientleri', icon: ShieldCheck }];
+const links = [{ href: '/admin', label: 'Genel bakış', icon: LayoutDashboard }, { href: '/admin/users', label: 'Kullanıcılar', icon: Users }, { href: '/admin/roles', label: 'Roller ve yetkiler', icon: KeyRound }, { href: '/admin/login-history', label: 'Login kayıtları', icon: LogIn }, { href: '/admin/oauth-clients', label: 'OAuth clientleri', icon: ShieldCheck }];
 
 export function AdminShell({ children }: Readonly<{ children: React.ReactNode }>) {
   const pathname = usePathname(); const { logout, user } = useAuth(); const [open, setOpen] = useState(false); const close = () => setOpen(false);

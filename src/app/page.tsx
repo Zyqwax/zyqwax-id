@@ -1,6 +1,6 @@
 import Link from "next/link";
-// import { PublicRoute } from "@/components/public-route";
 import { KeyRound, ShieldCheck, Sparkles } from "lucide-react";
+import { LandingAuthActions } from "@/components/landing-auth-actions";
 
 export default function Home() {
   return (
@@ -12,20 +12,7 @@ export default function Home() {
           </span>
           ZYQWAX ID
         </Link>
-        <div className="flex items-center gap-3">
-          <Link
-            href="/login"
-            className="rounded-lg px-4 py-2 text-sm font-medium text-zinc-300 transition hover:text-white"
-          >
-            Giriş yap
-          </Link>
-          <Link
-            href="/register"
-            className="rounded-lg bg-zinc-100 px-4 py-2 text-sm font-semibold text-zinc-900 transition hover:bg-white"
-          >
-            Hesap oluştur
-          </Link>
-        </div>
+        <LandingAuthActions />
       </header>
 
       {/* Hero */}

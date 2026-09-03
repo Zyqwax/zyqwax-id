@@ -8,6 +8,8 @@ export const ROLE_ID = {
 export const PERMISSION = {
   adminAccess: 'admin.access',
   usersRead: 'users.read',
+  rolesManage: 'roles.manage',
+  usersRolesUpdate: 'users.roles.update',
   loginHistoryRead: 'login_history.read',
   oauthClientsRead: 'oauth_clients.read',
   oauthClientsCreate: 'oauth_clients.create',
