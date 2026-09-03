@@ -23,8 +23,8 @@ export function LandingAuthActions() {
         <UserAvatar
           size={40}
           src={user.avatarUrl}
-          name={displayName}
-          className="size-10 shrink-0 rounded-full object-cover"
+          username={user.username}
+          name={user.name || user.email}
         />
         <span className="truncate text-sm font-medium text-zinc-100">{displayName}</span>
       </Link>

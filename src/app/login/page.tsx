@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { Suspense } from "react";
 import { AuthForm } from "@/components/auth-form";
 import { PublicRoute } from "@/components/public-route";
 import { PageLoader } from "@/components/page-loader";
+import { BrandLogo } from "@/components/brand-logo";
 
 export const metadata = { title: "Giriş yap" };
 
@@ -13,12 +13,7 @@ export default function LoginPage() {
         {/* Sol taraf — kimlik kartı görseli */}
         <div className="relative hidden items-center justify-center overflow-hidden border-r border-zinc-800 bg-zinc-900 p-12 lg:flex">
           <div className="w-full max-w-sm">
-            <Link href="/" className="mb-14 inline-flex items-center gap-2 text-sm font-semibold text-zinc-100">
-              <span aria-hidden="true" className="text-amber-400">
-                ✦
-              </span>
-              ZYQWAX ID
-            </Link>
+            <BrandLogo className="mb-14 text-sm font-semibold" nameClassName="text-zinc-100" />
 
             {/* Kart */}
             <div className="relative rounded-2xl border border-zinc-700 bg-zinc-950 p-6 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.6)]">
@@ -61,12 +56,7 @@ export default function LoginPage() {
         <div className="flex items-center justify-center p-6 sm:p-12">
           <div className="w-full max-w-sm">
             <div className="mb-10 lg:hidden">
-              <Link href="/" className="inline-flex items-center gap-2 text-sm font-semibold text-zinc-100">
-                <span aria-hidden="true" className="text-amber-400">
-                  ✦
-                </span>
-                ZYQWAX ID
-              </Link>
+              <BrandLogo className="text-sm font-semibold" nameClassName="text-zinc-100" />
             </div>
 
             <h2 className="text-2xl font-medium text-zinc-100">Giriş yap</h2>

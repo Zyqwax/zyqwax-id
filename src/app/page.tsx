@@ -1,17 +1,14 @@
 import Link from "next/link";
 import { KeyRound, ShieldCheck, Sparkles } from "lucide-react";
 import { LandingAuthActions } from "@/components/landing-auth-actions";
+import { BrandLogo } from "@/components/brand-logo";
+import { PublicFooter } from "@/components/public-footer";
 
 export default function Home() {
   return (
     <main className="min-h-screen bg-zinc-950">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6 sm:px-12">
-        <Link href="/" className="inline-flex items-center gap-2 text-sm font-semibold text-zinc-100">
-          <span aria-hidden="true" className="text-amber-400">
-            ✦
-          </span>
-          ZYQWAX ID
-        </Link>
+        <BrandLogo nameClassName="text-zinc-100" />
         <LandingAuthActions />
       </header>
 
@@ -79,7 +76,7 @@ export default function Home() {
       </section>
 
       {/* Özellikler */}
-      <section className="mx-auto max-w-6xl px-6 pb-24 sm:px-12">
+      <section id="features" className="mx-auto max-w-6xl px-6 pb-24 sm:px-12">
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
           <FeatureCard
             icon={<KeyRound className="size-5" strokeWidth={1.8} />}
@@ -99,9 +96,7 @@ export default function Home() {
         </div>
       </section>
 
-      <footer className="border-t border-zinc-900 px-6 py-8 sm:px-12">
-        <p className="text-center text-sm text-zinc-600">ZYQWAX ID</p>
-      </footer>
+      <PublicFooter />
     </main>
   );
 }

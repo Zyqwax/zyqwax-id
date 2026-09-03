@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { ApiError, forgotPassword } from "@/lib/api";
 import { Lock, MailCheck } from "lucide-react";
+import { BrandLogo } from "@/components/brand-logo";
 
 // Parola sıfırlama emaili isteyen ortalanmış formu yönetir.
 export default function ForgotPasswordPage() {
@@ -30,12 +31,7 @@ export default function ForgotPasswordPage() {
       {/* Sol taraf — kilitli kart görseli */}
       <div className="relative hidden items-center justify-center overflow-hidden border-r border-zinc-800 bg-zinc-900 p-12 lg:flex">
         <div className="w-full max-w-sm">
-          <Link href="/" className="mb-14 inline-flex items-center gap-2 text-sm font-semibold text-zinc-100">
-            <span aria-hidden="true" className="text-amber-400">
-              ✦
-            </span>
-            ZYQWAX ID
-          </Link>
+          <BrandLogo className="mb-14 text-sm font-semibold" nameClassName="text-zinc-100" />
 
           <div className="relative rounded-2xl border border-zinc-700 bg-zinc-950 p-6 opacity-70">
             <div className="absolute left-6 top-0 h-3 w-10 -translate-y-1/2 rounded-full bg-zinc-950 ring-1 ring-zinc-700" />
@@ -75,12 +71,7 @@ export default function ForgotPasswordPage() {
       <div className="flex items-center justify-center p-6 sm:p-12">
         <div className="w-full max-w-sm">
           <div className="mb-10 lg:hidden">
-            <Link href="/" className="inline-flex items-center gap-2 text-sm font-semibold text-zinc-100">
-              <span aria-hidden="true" className="text-amber-400">
-                ✦
-              </span>
-              ZYQWAX ID
-            </Link>
+            <BrandLogo className="text-sm font-semibold" nameClassName="text-zinc-100" />
           </div>
 
           <h2 className="text-2xl font-medium text-zinc-100">Şifremi unuttum</h2>

@@ -3,7 +3,6 @@
 
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { ShieldCheck } from "lucide-react";
 import { useAuth } from "./auth-provider";
 import { FullscreenLoader } from "./fullscreen-loader";
 

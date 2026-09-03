@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import {
   ApiError,
   cancelFriendRequest,
@@ -29,12 +29,14 @@ export default function FriendsPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [pending, setPending] = useState<string | null>(null);
+  const loadRequestRef = useRef(0);
 
   const [username, setUsername] = useState("");
   const [sending, setSending] = useState(false);
   const [sentMessage, setSentMessage] = useState("");
 
   const load = useCallback(async (target: Tab) => {
+    const requestId = ++loadRequestRef.current;
     setLoading(true);
     setError("");
     try {
@@ -42,17 +44,20 @@ export default function FriendsPage() {
       else if (target === "received") setReceived((await fetchFriendRequests("received")).requests);
       else setSent((await fetchFriendRequests("sent")).requests);
     } catch (cause) {
-      setError(cause instanceof ApiError ? cause.message : "Veriler yüklenemedi.");
+      if (requestId === loadRequestRef.current) {
+        setError(cause instanceof ApiError ? cause.message : "Veriler yüklenemedi.");
+      }
     } finally {
-      setLoading(false);
+      if (requestId === loadRequestRef.current) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
     const hasData = tab === "friends" ? friends : tab === "received" ? received : sent;
-    if (hasData === null) void load(tab);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab]);
+    if (hasData !== null) return;
+    const timer = window.setTimeout(() => void load(tab), 0);
+    return () => window.clearTimeout(timer);
+  }, [friends, load, received, sent, tab]);
 
   async function removeFriendRow(friend: FriendListItem) {
     if (!window.confirm(`${friend.name || friend.username || "Bu kullanıcı"} arkadaşlıktan çıkarılsın mı?`)) return;
@@ -224,10 +229,11 @@ export default function FriendsPage() {
                   >
                     <div className="flex min-w-0 items-center gap-4">
                       <UserAvatar
-                        size={96}
+                        size={44}
                         src={friend.avatarUrl}
-                        name={friend.username || friend.name}
-                        className="size-11 shrink-0 rounded-full object-cover"
+                        username={friend.username}
+                        name={friend.name}
+                        className=""
                       />
                       <div className="min-w-0">
                         <p className="truncate text-sm font-medium text-zinc-100">
@@ -261,10 +267,11 @@ export default function FriendsPage() {
                   >
                     <div className="flex min-w-0 items-center gap-4">
                       <UserAvatar
-                        size={96}
+                        size={44}
                         src={request.user.avatarUrl}
-                        name={request.user.username || request.user.name}
-                        className="size-11 shrink-0 rounded-full object-cover"
+                        username={request.user.username}
+                        name={request.user.name}
+                        className=""
                       />
                       <div className="min-w-0">
                         <p className="truncate text-sm font-medium text-zinc-100">

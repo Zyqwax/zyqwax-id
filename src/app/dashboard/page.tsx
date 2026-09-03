@@ -61,8 +61,7 @@ export default function DashboardPage() {
   const usernameCooldown = useMemo(() => cooldownDate(user?.usernameChangedAt, 7), [user?.usernameChangedAt]);
   const emailCooldown = useMemo(() => cooldownDate(user?.emailChangedAt, 7), [user?.emailChangedAt]);
 
-  if (loading)
-    return <PageLoader label="Profil yükleniyor…" />;
+  if (loading) return <PageLoader label="Profil yükleniyor…" />;
 
   if (error || !user)
     return (
@@ -216,12 +215,7 @@ export default function DashboardPage() {
               className="group relative block size-32 cursor-pointer overflow-hidden rounded-full border-2 border-zinc-700 p-1.5"
               title="Profil fotoğrafını değiştir"
             >
-              <UserAvatar
-                size={256}
-                src={avatar}
-                name={user.username}
-                className="size-full rounded-full object-cover"
-              />
+              <UserAvatar size={112} src={avatar} username={user.username} name={user.name || user.email} />
               <span className="absolute inset-0 grid place-items-center rounded-full bg-black/0 text-white opacity-0 transition group-hover:bg-black/55 group-hover:opacity-100">
                 <ImageUp className="size-5" strokeWidth={1.8} />
               </span>

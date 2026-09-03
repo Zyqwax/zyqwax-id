@@ -85,10 +85,11 @@ export default function BlockedPage() {
                 >
                   <div className="flex min-w-0 items-center gap-4">
                     <UserAvatar
-                      size={96}
+                      size={44}
                       src={item.user.avatarUrl}
-                      name={item.user.username || item.user.name}
-                      className="size-11 shrink-0 rounded-full object-cover grayscale"
+                      username={item.user.username}
+                      name={item.user.name}
+                      className="grayscale"
                     />
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium text-zinc-100">

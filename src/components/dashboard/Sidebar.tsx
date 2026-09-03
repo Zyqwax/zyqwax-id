@@ -7,6 +7,7 @@ import { fetchReceivedRequestCount } from "@/lib/api";
 import { useAuth } from "@/components/auth-provider";
 import { useSidebar } from "./SidebarContext";
 import { UserAvatar } from "@/components/ui/UserAvatar";
+import { BrandLogo } from "@/components/brand-logo";
 import { CircleOff, LogOut, ShieldCheck, UserRoundPen, UserRoundSearch } from "lucide-react";
 
 const navigation = [
@@ -51,13 +52,7 @@ export function Sidebar() {
       >
         <div>
           <div className="mb-10 flex items-center justify-between">
-            <Link
-              href="/dashboard"
-              onClick={() => setMobileOpen(false)}
-              className="flex items-center gap-3 text-lg font-semibold text-white"
-            >
-              <span className="grid size-9 place-items-center rounded-lg bg-zinc-100 text-zinc-900">Z</span>Zyqwax ID
-            </Link>
+            <BrandLogo href="/dashboard" className="text-lg font-semibold text-white" nameClassName="text-white" />
             <span className="text-zinc-500">•••</span>
           </div>
           <nav className="space-y-8">
@@ -92,12 +87,7 @@ export function Sidebar() {
         <div className="space-y-5">
           <div className="flex items-center gap-2 border-t border-zinc-800 pt-4">
             <div className="flex min-w-0 flex-1 items-center gap-3 rounded-lg px-2 py-2">
-              <UserAvatar
-                size={40}
-                src={user?.avatarUrl}
-                name={user?.name || user?.username || user?.email}
-                className="size-10 shrink-0 rounded-full object-cover"
-              />
+              <UserAvatar size={40} src={user?.avatarUrl} username={user?.username} name={user?.name || user?.email} />
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium text-zinc-100">
                   {user?.name || user?.username || "Kullanıcı"}

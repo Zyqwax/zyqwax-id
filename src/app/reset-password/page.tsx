@@ -7,6 +7,7 @@ import { Suspense } from "react";
 import { ApiError, resetPassword } from "@/lib/api";
 import { LockOpen, TriangleAlert } from "lucide-react";
 import { PageLoader } from "@/components/page-loader";
+import { BrandLogo } from "@/components/brand-logo";
 
 // URL token'ı ve yeni parola alanlarını yönetir.
 function ResetPasswordContent() {
@@ -40,12 +41,7 @@ function ResetPasswordContent() {
     <div className="flex items-center justify-center p-6 sm:p-12">
       <div className="w-full max-w-sm">
         <div className="mb-10 lg:hidden">
-          <Link href="/" className="inline-flex items-center gap-2 text-sm font-semibold text-zinc-100">
-            <span aria-hidden="true" className="text-amber-400">
-              ✦
-            </span>
-            ZYQWAX ID
-          </Link>
+          <BrandLogo className="text-sm font-semibold" nameClassName="text-zinc-100" />
         </div>
 
         <h2 className="text-2xl font-medium text-zinc-100">Yeni şifre</h2>
@@ -124,12 +120,7 @@ export default function ResetPasswordPage() {
     <main className="grid min-h-screen grid-cols-1 bg-zinc-950 lg:grid-cols-[1fr_1fr]">
       <div className="relative hidden items-center justify-center overflow-hidden border-r border-zinc-800 bg-zinc-900 p-12 lg:flex">
         <div className="w-full max-w-sm">
-          <Link href="/" className="mb-14 inline-flex items-center gap-2 text-sm font-semibold text-zinc-100">
-            <span aria-hidden="true" className="text-amber-400">
-              ✦
-            </span>
-            ZYQWAX ID
-          </Link>
+          <BrandLogo className="mb-14 text-sm font-semibold" nameClassName="text-zinc-100" />
 
           <div className="relative rounded-2xl border border-zinc-700 bg-zinc-950 p-6">
             <div className="absolute left-6 top-0 h-3 w-10 -translate-y-1/2 rounded-full bg-zinc-950 ring-1 ring-zinc-700" />

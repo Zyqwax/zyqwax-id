@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ApiError, request } from "@/lib/api";
 import { PageLoader } from "@/components/page-loader";
 type Client = {
@@ -24,7 +24,7 @@ export default function OAuthClientsPage() {
   const [secret, setSecret] = useState("");
   const [error, setError] = useState("");
   const [loaded, setLoaded] = useState(false);
-  async function load() {
+  const load = useCallback(async () => {
     try {
       setClients((await request<{ clients: Client[] }>("/api/admin/oauth-clients")).clients);
     } catch (cause) {
@@ -32,10 +32,11 @@ export default function OAuthClientsPage() {
     } finally {
       setLoaded(true);
     }
-  }
-  useEffect(() => {
-    void load();
   }, []);
+  useEffect(() => {
+    const timer = window.setTimeout(() => void load(), 0);
+    return () => window.clearTimeout(timer);
+  }, [load]);
   function edit(client: Client) {
     setEditing(client.id);
     setForm({

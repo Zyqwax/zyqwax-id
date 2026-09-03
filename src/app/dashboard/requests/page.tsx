@@ -174,10 +174,11 @@ export default function RequestsPage() {
                 >
                   <div className="flex min-w-0 items-center gap-4">
                     <UserAvatar
-                      size={96}
+                      size={44}
                       src={request.user.avatarUrl}
-                      name={request.user.username || request.user.name}
-                      className="size-11 shrink-0 rounded-full object-cover"
+                      username={request.user.username}
+                      name={request.user.name}
+                      className=""
                     />
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium text-zinc-100">
