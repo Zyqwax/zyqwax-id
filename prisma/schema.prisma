@@ -37,6 +37,7 @@ model User {
   blocksSent              Block[]               @relation("BlocksSent")
   blocksReceived          Block[]               @relation("BlocksReceived")
   roles                   UserRoleAssignment[]
+  ownedApps               App[]                 @relation("AppOwner")
 }
 
 // Görünen adı yalnızca yönetim arayüzü içindir; yetki kontrolünde kullanılmaz.
@@ -82,13 +83,21 @@ model App {
   id                 String                @id @default(uuid())
   clientId           String                @unique @default(uuid())
   name               String
+  description        String?
+  ownerId            String?
   secretKeyHash      String
   redirectUris       String[]
   allowedOrigins     String[]
+  allowedScopes      String[]              @default(["profile", "email"])
+  isActive           Boolean               @default(true)
   createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  owner              User?                 @relation("AppOwner", fields: [ownerId], references: [id], onDelete: SetNull)
   refreshTokens      RefreshToken[]
   authorizationCodes AuthorizationCode[]
   consentRequests    OAuthConsentRequest[]
+
+  @@index([ownerId, createdAt])
 }
 
 // Kullanıcı-uygulama oturumlarını temsil eder; düz token yerine yalnızca token özeti saklanır.

@@ -3,6 +3,7 @@ import { prisma } from './prisma';
 export const ROLE_ID = {
   defaultUser: 'role_user',
   administrator: 'role_administrator',
+  developer: 'role_developer',
 } as const;
 
 export const PERMISSION = {
@@ -16,6 +17,11 @@ export const PERMISSION = {
   oauthClientsUpdate: 'oauth_clients.update',
   oauthClientsDelete: 'oauth_clients.delete',
   profileLimitsBypass: 'profile.limits.bypass',
+  developerPortalAccess: 'developer.portal.access',
+  developerAppsRead: 'developer.apps.read',
+  developerAppsCreate: 'developer.apps.create',
+  developerAppsUpdate: 'developer.apps.update',
+  developerAppsDelete: 'developer.apps.delete',
 } as const;
 
 export const userAccessInclude = {

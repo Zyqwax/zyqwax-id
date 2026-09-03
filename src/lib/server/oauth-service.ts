@@ -16,9 +16,10 @@ const CONSENT_LIFETIME_MS = 10 * 60 * 1000;
 
 export async function authorizeUser(request: NextRequest, query: AuthorizeInput): Promise<NextResponse> {
   const app = await prisma.app.findUnique({ where: { clientId: query.client_id } });
-  if (!app || !app.redirectUris.includes(query.redirect_uri)) throw new ServiceError(400, OAUTH_ERROR);
+  if (!app || !app.isActive || !app.redirectUris.includes(query.redirect_uri)) throw new ServiceError(400, OAUTH_ERROR);
   const scope = normalizeScope(query.scope);
   if (!scope) throw new ServiceError(400, 'desteklenmeyen scope');
+  if (scope.split(' ').some((item) => !app.allowedScopes.includes(item))) throw new ServiceError(400, 'client bu scope için yetkili değil');
 
   let user;
   // Önce bearer header, yoksa root kapsamlı refresh cookie ile kullanıcı bulunur.
@@ -81,11 +82,11 @@ export async function resolveConsent(rawToken: string, action: 'approve' | 'deny
 
 export async function exchangeAuthorizationCode(body: TokenInput) {
   const app = await prisma.app.findUnique({ where: { clientId: body.client_id } });
-  if (!app || !(await comparePassword(body.client_secret, app.secretKeyHash))) throw new ServiceError(401, 'client doğrulanamadı');
+  if (!app || !app.isActive || !(await comparePassword(body.client_secret, app.secretKeyHash))) throw new ServiceError(401, 'client doğrulanamadı');
   const code = await prisma.authorizationCode.findFirst({ where: { codeHash: hashAuthorizationCode(body.code), appId: app.id, redirectUri: body.redirect_uri, used: false, expiresAt: { gt: new Date() } }, include: { user: true } });
   if (!code || !code.user.isActive || code.codeChallengeMethod !== 'S256') throw new ServiceError(400, 'authorization code geçersiz');
   if (!safeCompare(createCodeChallenge(body.code_verifier), code.codeChallenge)) throw new ServiceError(400, 'PKCE doğrulaması başarısız');
-  const accessToken = generateAccessToken(code.userId, code.scope ?? 'profile email');
+  const accessToken = generateAccessToken(code.userId, code.scope ?? 'profile email', app.id);
   const refreshToken = generateRefreshToken(code.userId);
   await prisma.$transaction(async (tx) => {
     const consumed = await tx.authorizationCode.updateMany({ where: { id: code.id, used: false, expiresAt: { gt: new Date() } }, data: { used: true } });

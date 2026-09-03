@@ -25,7 +25,7 @@ export function UserAvatar({
       aria-label={label}
     >
       {src ? (
-        <Image src={src} alt="" fill sizes={`${size}px`} className="object-cover" />
+        <Image src={src} alt="" fill sizes={`${size}px`} className="object-cover" priority />
       ) : (
         <span aria-hidden="true">{initials}</span>
       )}
@@ -35,6 +35,11 @@ export function UserAvatar({
 
 function getInitials(value: string): string {
   const parts = value.split(/[\s._-]+/).filter(Boolean);
-  if (parts.length > 1) return parts.slice(0, 2).map((part) => part[0]).join("").toUpperCase();
+  if (parts.length > 1)
+    return parts
+      .slice(0, 2)
+      .map((part) => part[0])
+      .join("")
+      .toUpperCase();
   return value.slice(0, 2).toUpperCase();
 }

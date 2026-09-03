@@ -4,8 +4,8 @@ import { getServerEnv } from './env';
 
 const algorithm = 'HS256' as const;
 
-export function generateAccessToken(userId: string, scope?: string): string {
-  return jwt.sign({ sub: userId, ...(scope ? { scope } : {}) }, getServerEnv().JWT_ACCESS_SECRET, { algorithm, expiresIn: '15m' } as SignOptions);
+export function generateAccessToken(userId: string, scope?: string, appId?: string): string {
+  return jwt.sign({ sub: userId, ...(scope ? { scope } : {}), ...(appId ? { appId } : {}) }, getServerEnv().JWT_ACCESS_SECRET, { algorithm, expiresIn: '15m' } as SignOptions);
 }
 
 export function generateRefreshToken(userId: string): string {
