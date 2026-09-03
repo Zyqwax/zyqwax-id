@@ -8,7 +8,7 @@ export function DashboardLayout({ children }: Readonly<{ children: React.ReactNo
     <SidebarProvider>
       <div className="flex h-screen max-h-screen w-full overflow-hidden bg-zinc-950 text-zinc-100">
         <Sidebar />
-        <main className="min-h-0 min-w-0 flex-1 overflow-y-auto">
+        <main className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto">
           <DashboardHeader />
           {children}
         </main>

@@ -8,7 +8,7 @@ import { useAuth } from "@/components/auth-provider";
 import { useSidebar } from "./SidebarContext";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { BrandLogo } from "@/components/brand-logo";
-import { CircleOff, LogOut, ShieldCheck, UserRoundPen, UserRoundSearch } from "lucide-react";
+import { CircleOff, LogOut, ShieldCheck, UserRoundPen, UserRoundSearch, X } from "lucide-react";
 
 const navigation = [
   { href: "/dashboard", label: "Profil", icon: <UserRoundPen size={20} /> },
@@ -48,12 +48,20 @@ export function Sidebar() {
         />
       )}
       <aside
-        className={`fixed inset-y-0 left-0 z-30 flex h-screen max-h-screen w-72 -translate-x-full flex-col justify-between overflow-hidden border-r border-zinc-700 bg-zinc-900 p-5 transition-transform md:static md:translate-x-0 ${mobileOpen ? "translate-x-0" : ""}`}
+        id="dashboard-sidebar"
+        className={`fixed inset-y-0 left-0 z-30 flex h-screen max-h-screen w-72 max-w-[100vw] shrink-0 -translate-x-full flex-col justify-between overflow-y-auto overflow-x-hidden border-r border-zinc-700 bg-zinc-900 p-5 transition-transform md:static md:translate-x-0 ${mobileOpen ? "translate-x-0" : ""}`}
       >
         <div>
           <div className="mb-10 flex items-center justify-between">
             <BrandLogo href="/dashboard" className="text-lg font-semibold text-white" nameClassName="text-white" />
-            <span className="text-zinc-500">•••</span>
+            <button
+              type="button"
+              className="grid size-9 cursor-pointer place-items-center rounded-lg text-zinc-400 hover:bg-zinc-800 hover:text-white md:hidden"
+              onClick={() => setMobileOpen(false)}
+              aria-label="Menüyü kapat"
+            >
+              <X size={20} />
+            </button>
           </div>
           <nav className="space-y-8">
             <div>
